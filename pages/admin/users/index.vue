@@ -9,7 +9,7 @@
         </div>
         <button
           @click="openAddUserModal"
-          class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+          class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
           <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
@@ -32,7 +32,7 @@
               <input
                 id="search"
                 v-model="searchQuery"
-                class="focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md"
+                class="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md"
                 placeholder="Cari nama, email, atau username"
                 type="search"
               />
@@ -41,7 +41,7 @@
           <Listbox v-model="selectedRole" as="div" class="w-56">
             <ListboxLabel class="block text-sm font-medium text-gray-700">Peran</ListboxLabel>
             <div class="mt-1 relative">
-              <ListboxButton class="bg-white relative w-full border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+              <ListboxButton class="bg-white relative w-full border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                 <span class="block truncate">{{ selectedRole.name }}</span>
                 <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                   <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -63,7 +63,7 @@
                     v-slot="{ active, selected }"
                   >
                     <div :class="[
-                      active ? 'text-white bg-primary-600' : 'text-gray-900',
+                      active ? 'text-white bg-blue-600' : 'text-gray-900',
                       'cursor-default select-none relative py-2 pl-3 pr-9'
                     ]">
                       <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">
@@ -73,7 +73,7 @@
                       <span
                         v-if="selected"
                         :class="[
-                          active ? 'text-white' : 'text-primary-600',
+                          active ? 'text-white' : 'text-blue-600',
                           'absolute inset-y-0 right-0 flex items-center pr-4'
                         ]"
                       >
@@ -123,7 +123,7 @@
                     <td class="px-6 py-4 whitespace-nowrap">
                       <div class="flex items-center">
                         <div class="flex-shrink-0 h-10 w-10">
-                          <div class="h-10 w-10 rounded-full bg-primary-600 flex items-center justify-center text-white font-medium">
+                          <div class="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-medium">
                             {{ getUserInitials(user.name) }}
                           </div>
                         </div>
@@ -155,7 +155,7 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div class="flex space-x-2 justify-end">
-                        <button @click="openEditUserModal(user)" class="text-primary-600 hover:text-primary-900">
+                        <button @click="openEditUserModal(user)" class="text-blue-600 hover:text-blue-900">
                           Edit
                         </button>
                         <button @click="openDeleteModal(user)" class="text-red-600 hover:text-red-900">
@@ -197,7 +197,7 @@
                           type="text" 
                           id="name" 
                           v-model="userForm.name" 
-                          class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md" 
+                          class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md" 
                           required 
                         />
                       </div>
@@ -210,7 +210,7 @@
                           type="text" 
                           id="username" 
                           v-model="userForm.username" 
-                          class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md" 
+                          class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md" 
                           required 
                         />
                       </div>
@@ -223,7 +223,7 @@
                           type="email" 
                           id="email" 
                           v-model="userForm.email" 
-                          class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md" 
+                          class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md" 
                           required 
                         />
                       </div>
@@ -236,7 +236,7 @@
                           type="password" 
                           id="password" 
                           v-model="userForm.password" 
-                          class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md" 
+                          class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md" 
                           :required="!editMode" 
                         />
                       </div>
@@ -249,7 +249,7 @@
                           type="password" 
                           id="confirmPassword" 
                           v-model="userForm.confirmPassword" 
-                          class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md" 
+                          class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md" 
                           :required="!editMode" 
                         />
                       </div>
@@ -261,7 +261,7 @@
                         <select 
                           id="role" 
                           v-model="userForm.role" 
-                          class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                          class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
                         >
                           <option value="Admin">Admin</option>
                           <option value="User">User</option>
@@ -275,7 +275,7 @@
                         <select 
                           id="status" 
                           v-model="userForm.status" 
-                          class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                          class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
                         >
                           <option value="Aktif">Aktif</option>
                           <option value="Nonaktif">Nonaktif</option>
@@ -287,14 +287,14 @@
                   <div class="mt-6 flex justify-end space-x-3">
                     <button
                       type="button"
-                      class="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                      class="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                       @click="closeUserModal"
                     >
                       Batal
                     </button>
                     <button
                       type="submit"
-                      class="inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                      class="inline-flex justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                     >
                       {{ editMode ? 'Simpan Perubahan' : 'Tambah Pengguna' }}
                     </button>

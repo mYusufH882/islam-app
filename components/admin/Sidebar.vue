@@ -1,6 +1,6 @@
 <template>
-    <div class="bg-primary-800 w-64 flex-shrink-0 hidden md:block h-screen">
-      <div class="flex items-center h-16 flex-shrink-0 px-4 bg-primary-900">
+    <div class="bg-blue-800 w-64 flex-shrink-0 hidden md:block h-screen">
+      <div class="flex items-center h-16 flex-shrink-0 px-4 bg-blue-900">
         <h1 class="text-white font-bold text-xl">{{ appName }}</h1>
       </div>
       <div class="flex-1 flex flex-col overflow-y-auto">
@@ -12,14 +12,14 @@
             class="group flex items-center px-4 py-3 text-base font-medium rounded-md"
             :class="[
               isExactActivePath(item.path)
-                ? 'bg-primary-700 text-white'
-                : 'text-primary-100 hover:bg-primary-700 hover:text-white'
+                ? 'bg-blue-700 text-white'
+                : 'text-blue-100 hover:bg-blue-700 hover:text-white'
             ]"
           >
             <div
               class="mr-3 flex-shrink-0 h-6 w-6"
               :class="[
-                isExactActivePath(item.path) ? 'text-white' : 'text-primary-300 group-hover:text-white'
+                isExactActivePath(item.path) ? 'text-white' : 'text-blue-300 group-hover:text-white'
               ]"
               v-html="item.icon"
             ></div>
@@ -42,7 +42,7 @@
         <div class="fixed inset-0" @click="closeSidebar">
           <div class="absolute inset-0 bg-gray-600 opacity-75"></div>
         </div>
-        <div class="relative flex-1 flex flex-col max-w-xs w-full bg-primary-800">
+        <div class="relative flex-1 flex flex-col max-w-xs w-full bg-blue-800">
           <div class="absolute top-0 right-0 -mr-12 pt-2">
             <button
               @click="closeSidebar"
@@ -54,7 +54,7 @@
               </svg>
             </button>
           </div>
-          <div class="flex items-center h-16 flex-shrink-0 px-4 bg-primary-900">
+          <div class="flex items-center h-16 flex-shrink-0 px-4 bg-blue-900">
             <h1 class="text-white font-bold text-xl">{{ appName }}</h1>
           </div>
           <div class="mt-5 flex-1 h-0 overflow-y-auto">
@@ -66,15 +66,15 @@
                 class="group flex items-center px-4 py-3 text-base font-medium rounded-md"
                 :class="[
                   isExactActivePath(item.path)
-                    ? 'bg-primary-700 text-white'
-                    : 'text-primary-100 hover:bg-primary-700 hover:text-white'
+                    ? 'bg-blue-700 text-white'
+                    : 'text-blue-100 hover:bg-blue-700 hover:text-white'
                 ]"
                 @click="closeSidebar"
               >
                 <div
                   class="mr-3 flex-shrink-0 h-6 w-6"
                   :class="[
-                    isExactActivePath(item.path) ? 'text-white' : 'text-primary-300 group-hover:text-white'
+                    isExactActivePath(item.path) ? 'text-white' : 'text-blue-300 group-hover:text-white'
                   ]"
                   v-html="item.icon"
                 ></div>
