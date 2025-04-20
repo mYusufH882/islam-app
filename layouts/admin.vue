@@ -11,7 +11,7 @@
               <!-- Mobile menu button -->
               <button
                 @click="sidebarOpen = true"
-                class="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 md:hidden"
+                class="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 md:hidden"
               >
                 <span class="sr-only">Buka menu</span>
                 <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -24,9 +24,9 @@
             <!-- Profile dropdown -->
             <Menu as="div" class="ml-3 relative">
               <div>
-                <MenuButton class="flex items-center max-w-xs text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                <MenuButton class="flex items-center max-w-xs text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                   <span class="sr-only">Buka menu pengguna</span>
-                  <div class="h-8 w-8 rounded-full bg-primary-600 flex items-center justify-center text-white">
+                  <div class="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-white">
                     A
                   </div>
                 </MenuButton>

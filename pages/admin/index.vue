@@ -8,7 +8,7 @@
         </div>
         <NuxtLink
           to="/admin/blog/create"
-          class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+          class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
           <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
@@ -31,7 +31,7 @@
               <input
                 id="search"
                 v-model="searchQuery"
-                class="focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md"
+                class="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md"
                 placeholder="Cari artikel"
                 type="search"
               />
@@ -40,7 +40,7 @@
           <Listbox v-model="selectedCategory" as="div" class="w-56">
             <ListboxLabel class="block text-sm font-medium text-gray-700">Kategori</ListboxLabel>
             <div class="mt-1 relative">
-              <ListboxButton class="bg-white relative w-full border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+              <ListboxButton class="bg-white relative w-full border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                 <span class="block truncate">{{ selectedCategory.name }}</span>
                 <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                   <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -62,7 +62,7 @@
                     v-slot="{ active, selected }"
                   >
                     <div :class="[
-                      active ? 'text-white bg-primary-600' : 'text-gray-900',
+                      active ? 'text-white bg-blue-600' : 'text-gray-900',
                       'cursor-default select-none relative py-2 pl-3 pr-9'
                     ]">
                       <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">
@@ -72,7 +72,7 @@
                       <span
                         v-if="selected"
                         :class="[
-                          active ? 'text-white' : 'text-primary-600',
+                          active ? 'text-white' : 'text-blue-600',
                           'absolute inset-y-0 right-0 flex items-center pr-4'
                         ]"
                       >
@@ -118,8 +118,8 @@
                   <tr v-for="article in filteredArticles" :key="article.id">
                     <td class="px-6 py-4 whitespace-nowrap">
                       <div class="flex items-center">
-                        <div class="flex-shrink-0 h-10 w-10 bg-primary-100 rounded-md flex items-center justify-center">
-                          <svg class="h-6 w-6 text-primary-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div class="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-md flex items-center justify-center">
+                          <svg class="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                           </svg>
                         </div>
@@ -146,7 +146,7 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div class="flex space-x-2 justify-end">
-                        <NuxtLink :to="`/admin/blog/${article.id}/edit`" class="text-primary-600 hover:text-primary-900">
+                        <NuxtLink :to="`/admin/blog/${article.id}/edit`" class="text-blue-600 hover:text-blue-900">
                           Edit
                         </NuxtLink>
                         <button @click="openDeleteModal(article)" class="text-red-600 hover:text-red-900">

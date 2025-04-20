@@ -3,7 +3,7 @@
     <div class="relative z-10 flex-shrink-0 flex h-16 bg-white shadow">
       <button
         @click="openSidebar"
-        class="px-4 border-r border-gray-200 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 md:hidden"
+        class="px-4 border-r border-gray-200 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 md:hidden"
       >
         <span class="sr-only">Buka sidebar</span>
         <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -18,9 +18,9 @@
           <!-- Profile dropdown -->
           <Menu as="div" class="ml-3 relative">
             <div>
-              <MenuButton class="max-w-xs bg-white flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+              <MenuButton class="max-w-xs bg-white flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                 <span class="sr-only">Buka menu pengguna</span>
-                <div class="h-8 w-8 rounded-full bg-primary-600 flex items-center justify-center text-white">
+                <div class="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-white">
                   A
                 </div>
               </MenuButton>
