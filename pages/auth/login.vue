@@ -34,6 +34,20 @@
             </div>
           </div>
 
+          <!-- Alert for success -->
+          <div v-if="successMessage" class="mb-4 rounded-md bg-green-50 p-4">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm font-medium text-green-800">{{ successMessage }}</p>
+              </div>
+            </div>
+          </div>
+
           <div>
             <label for="identifier" class="block text-sm font-medium text-gray-700">
               Email / Username
@@ -142,7 +156,10 @@ import { useAuthStore } from '~/stores/auth';
 import type { ApiResponse } from '~/utils/api';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
+
+const registrationSuccess = computed(() => route.query.registration_success === 'true');
 
 // Form data
 const identifier = ref('');  // Can be either username or email
@@ -150,7 +167,16 @@ const password = ref('');
 const rememberMe = ref(false);
 const loading = ref(false);
 const error = ref('');
+const successMessage = ref('');
 
+
+watch(() => route.query.registration_success, (newValue) => {
+  if (newValue === 'true') {
+    successMessage.value = 'Pendaftaran berhasil! Silakan masuk dengan akun baru Anda.';
+  } else {
+    successMessage.value = '';
+  }
+}, { immediate: true });
 /**
  * Handle login form submission
  */

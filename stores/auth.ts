@@ -152,12 +152,8 @@ export const useAuthStore = defineStore('auth', {
             const { apiFetch } = useApi();
             
             const { data, error } = await apiFetch<UserProfile>('/auth/profile');
-            
-            console.log('Fetch Profile - Data:', data.value);
-            console.log('Fetch Profile - Error:', error.value);
     
             if (error.value) {
-                console.log('Profile fetch error, logging out');
                 this.logout();
                 return false;
             }
@@ -166,19 +162,12 @@ export const useAuthStore = defineStore('auth', {
                 this.user = data.value.data;
                 this.isAuthenticated = true;
                 
-                console.log('Profile fetched successfully', {
-                    user: this.user,
-                    isAuthenticated: this.isAuthenticated
-                });
-                
                 return true;
             }
             
-            console.log('Profile fetch failed');
             this.logout();
             return false;
         } catch (error) {
-            console.error('Profile fetch catch block:', error);
             this.logout();
             return false;
         }
