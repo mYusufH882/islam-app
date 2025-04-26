@@ -1,3 +1,4 @@
+// pages/auth/login.vue
 <template>
   <div class="min-h-screen flex flex-col justify-center py-6 px-4 sm:py-12 sm:px-6 lg:px-8 bg-blue-700">
     <div class="mx-auto w-full max-w-md">
@@ -19,17 +20,31 @@
     <div class="mt-6 sm:mt-8 mx-auto w-full max-w-md">
       <div class="bg-white py-6 sm:py-8 px-4 sm:px-10 shadow rounded-lg">
         <form class="space-y-5 sm:space-y-6" @submit.prevent="login">
+          <!-- Alert for errors -->
+          <div v-if="error" class="bg-red-50 border-l-4 border-red-400 p-4">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                </svg>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm text-red-700">{{ error }}</p>
+              </div>
+            </div>
+          </div>
+
           <div>
-            <label for="email" class="block text-sm font-medium text-gray-700">
+            <label for="identifier" class="block text-sm font-medium text-gray-700">
               Email / Username
             </label>
             <div class="mt-1">
               <input
-                id="email"
-                v-model="email"
-                name="email"
+                id="identifier"
+                v-model="identifier"
+                name="identifier"
                 type="text"
-                autocomplete="email"
+                autocomplete="username email"
                 required
                 class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
                 placeholder="Masukkan email atau username"
@@ -116,40 +131,73 @@
 </template>
 
 <script setup lang="ts">
-// Definisikan layout untuk halaman ini
 definePageMeta({
-  layout: "custom" // Gunakan 'custom' (akan di-fallback ke default jika tidak ada) daripada false
+  layout: "custom",
+  // Ensure this page is public (not protected by auth middleware)
+  middleware: []
 });
 
-import { ref } from 'vue';
-const router = useRouter();
+import { ref, reactive } from 'vue';
+import { useAuthStore } from '~/stores/auth';
+import type { ApiResponse } from '~/utils/api';
 
-const email = ref('');
+const router = useRouter();
+const authStore = useAuthStore();
+
+// Form data
+const identifier = ref('');  // Can be either username or email
 const password = ref('');
 const rememberMe = ref(false);
 const loading = ref(false);
 const error = ref('');
 
+/**
+ * Handle login form submission
+ */
 async function login() {
-  loading.value = true;
+  // Reset error state
   error.value = '';
   
+  // Validation
+  if (!identifier.value || !password.value) {
+    error.value = 'Email/username dan password diperlukan';
+    return;
+  }
+  
+  loading.value = true;
+  
   try {
-    // Implement your login logic here
-    // Example: await api.login(email.value, password.value)
-    console.log('Login attempt with:', {
-      email: email.value,
-      password: password.value,
-      rememberMe: rememberMe.value
-    });
+    // Attempt to login
+    const success = await authStore.login(identifier.value, password.value);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // On successful login
-    router.push('/');
-  } catch (err) {
-    error.value = 'Login gagal. Silakan periksa email dan password Anda.';
+    if (success) {
+      // If remember me is checked, we could set a longer expiry for cookies
+      // or implement additional persistence logic here
+      if (rememberMe.value) {
+        // Logic for "remember me" could be implemented here
+        // For example, we could store a flag in localStorage
+        localStorage.setItem('auth_remember', 'true');
+      }
+      
+      // Check user role and redirect accordingly
+      if (authStore.user?.role === 'admin') {
+        // Admin users go to admin dashboard
+        router.push('/admin');
+      } else {
+        // Regular users go to homepage
+        router.push('/');
+      }
+    } else {
+      // Login failed
+      error.value = 'Login gagal. Periksa email/username dan password Anda.';
+    }
+  } catch (err: any) {
+    // Handle specific error types if available in the error response
+    if (err?.response?.data?.message) {
+      error.value = err.response.data.message;
+    } else {
+      error.value = 'Terjadi kesalahan saat login. Silakan coba lagi.';
+    }
     console.error('Login error:', err);
   } finally {
     loading.value = false;

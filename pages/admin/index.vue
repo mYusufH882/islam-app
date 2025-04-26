@@ -236,24 +236,25 @@ import Chart from 'chart.js/auto'
 
 // Definisikan layout untuk halaman ini
 definePageMeta({
-layout: 'admin'
+  layout: 'admin',
+  middleware: ['admin']
 })
 
 // Definisi tipe untuk data
 type ActivityType = 'Blog' | 'User' | 'Bookmark'
 
 interface Activity {
-title: string
-type: ActivityType
-user: string
-date: string
-link: string
+  title: string
+  type: ActivityType
+  user: string
+  date: string
+  link: string
 }
 
 interface CategoryData {
-name: string
-count: number
-percentage: number
+  name: string
+  count: number
+  percentage: number
 }
 
 // Referensi untuk elemen canvas chart
@@ -263,25 +264,25 @@ const categoryChart = ref<HTMLCanvasElement | null>(null)
 
 // Data statistik
 const blogStats = ref({
-total: 24,
-published: 18,
-draft: 6
+  total: 24,
+  published: 18,
+  draft: 6
 })
 
 const userStats = ref({
-total: 142,
-active: 135,
-inactive: 7
+  total: 142,
+  active: 135,
+  inactive: 7
 })
 
 const bookmarkStats = ref({
-total: 89,
-thisMonth: 12
+  total: 89,
+  thisMonth: 12
 })
 
 const quranStats = ref({
-ayatDibaca: 1254,
-surahSelesai: 15
+  ayatDibaca: 1254,
+  surahSelesai: 15
 })
 
 // Data untuk chart kategori blog
