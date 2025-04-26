@@ -85,33 +85,39 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, computed, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
+import { useAuthStore } from '~/stores/auth'
+
+const authStore = useAuthStore()
+const router = useRouter()
+const route = useRoute()
+const sidebarOpen = ref(false)
+const isLoggingOut = ref(false)
+
+const pageTitle = computed(() => {
+  if (route.path === '/admin') return 'Dashboard Admin'
+  if (route.path.startsWith('/admin/blog')) return 'Manajemen Blog'
+  if (route.path.startsWith('/admin/users')) return 'Manajemen Pengguna'
+  return 'Admin Panel'
+})
+
+watch(() => route.path, () => {
+  sidebarOpen.value = false
+})
+
+const logout = async () => {
+  if (isLoggingOut.value) return
   
-  // State untuk kontrol sidebar mobile
-  const sidebarOpen = ref(false)
-  
-  // Mengambil rute untuk menentukan judul halaman
-  const route = useRoute()
-  
-  // Menentukan judul halaman berdasarkan rute
-  const pageTitle = computed(() => {
-    // Mengembalikan judul berdasarkan path
-    if (route.path === '/admin') return 'Dashboard Admin'
-    if (route.path.startsWith('/admin/blog')) return 'Manajemen Blog'
-    if (route.path.startsWith('/admin/users')) return 'Manajemen Pengguna'
+  try {
+    isLoggingOut.value = true
     
-    // Default title
-    return 'Admin Panel'
-  })
-  
-  // Update sidebar state ketika route berubah (tutup sidebar di mobile saat navigasi)
-  watch(() => route.path, () => {
-    sidebarOpen.value = false
-  })
-  
-  // Fungsi untuk logout
-  const logout = () => {
-    // Implementasi logout di sini
-    console.log('Logout')
+    await authStore.logout()
+  } catch (error) {
+    console.error('Logout failed:', error)
+  } finally {
+    isLoggingOut.value = false
   }
+}
 </script>

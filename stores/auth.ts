@@ -89,102 +89,129 @@ export const useAuthStore = defineStore('auth', {
       }
     },
     
-    logout(): void {
-      // If we have a token, try to call the logout endpoint
-      if (this.token && this.refreshToken) {
-        const { apiFetch } = useApi();
-        apiFetch('/auth/logout', {
-          method: 'POST',
-          body: { refreshToken: this.refreshToken }
-        }).catch(error => {
-          console.error('Logout API error:', error);
-        });
-      }
-      
-      this.user = null;
-      this.token = null;
-      this.refreshToken = null;
-      this.isAuthenticated = false;
-      
-      // Clear stored tokens
-      if (process.client) {
-        localStorage.removeItem('auth_token')
-        localStorage.removeItem('auth_refresh_token')
-      }
-    },
-    
-    async refreshTokenAction(): Promise<boolean> {
-      if (!this.refreshToken) return false;
-      
-      try {
-        const { apiFetch } = useApi();
+    logout(): Promise<void> {
+      return new Promise((resolve) => {
+        // 1. Simpan refreshToken untuk API call
+        const refreshToken = this.refreshToken
         
-        const { data, error } = await apiFetch<{ token: string; refreshToken: string }>('/auth/refresh-token', {
-          method: 'POST',
-          body: { refreshToken: this.refreshToken }
-        });
+        // 2. Clear state immediately
+        this.user = null
+        this.token = null
+        this.refreshToken = null
+        this.isAuthenticated = false
         
-        if (error.value) {
-          this.logout();
-          return false;
+        // 3. Clear storage
+        if (process.client) {
+          localStorage.removeItem('auth_token')
+          localStorage.removeItem('auth_refresh_token')
         }
         
-        if (data.value && data.value.success) {
-          const tokenData = data.value.data;
-          this.token = tokenData.token;
-          this.refreshToken = tokenData.refreshToken;
-          
-          // Update stored tokens
-          localStorage.setItem('auth_token', tokenData.token);
-          localStorage.setItem('auth_refresh_token', tokenData.refreshToken);
-          
-          return true;
+        // 4. Call API logout (fire and forget)
+        if (refreshToken) {
+          const { apiFetch } = useApi()
+          apiFetch('/auth/logout', {
+            method: 'POST',
+            body: { refreshToken }
+          }).finally(resolve)
+        } else {
+          resolve()
         }
-        
-        return false;
-      } catch (error) {
-        console.error('Token refresh error:', error);
-        this.logout();
-        return false;
+      })
+    },
+
+    async init(): Promise<void> {      
+      // Pastikan hanya dijalankan di sisi klien
+      if (process.client) {;
+          const token = localStorage.getItem('auth_token');
+          const refreshToken = localStorage.getItem('auth_refresh_token');
+                    
+          if (token && refreshToken) {
+              this.token = token;
+              this.refreshToken = refreshToken;
+              
+              try {
+                  const profileFetched = await this.fetchUserProfile();
+                  this.isAuthenticated = profileFetched;
+              } catch (error) {
+                  console.error('Init error:', error);
+                  this.logout();
+              }
+          } else {
+              this.logout();
+          }
       }
     },
-    
-    init(): void {
-      if (process.client) {
-        const token = localStorage.getItem('auth_token')
-        const refreshToken = localStorage.getItem('auth_refresh_token')
-        
-        if (token && refreshToken) {
-          this.token = token
-          this.refreshToken = refreshToken
-          this.isAuthenticated = true
-          this.fetchUserProfile()
-        }
-      }
-    },
-    
+  
     async fetchUserProfile(): Promise<boolean> {
-      try {
-        const { apiFetch } = useApi();
-        
-        const { data, error } = await apiFetch<UserProfile>('/auth/profile');
-        
-        if (error.value) {
-          this.logout();
-          return false;
+        // Pastikan hanya dijalankan di sisi klien
+        if (process.server) {
+            return false;
         }
-        
-        if (data.value && data.value.success) {
-          this.user = data.value.data;
-          return true;
+    
+        try {
+            const { apiFetch } = useApi();
+            
+            const { data, error } = await apiFetch<UserProfile>('/auth/profile');
+            
+            console.log('Fetch Profile - Data:', data.value);
+            console.log('Fetch Profile - Error:', error.value);
+    
+            if (error.value) {
+                console.log('Profile fetch error, logging out');
+                this.logout();
+                return false;
+            }
+            
+            if (data.value && data.value.success) {
+                this.user = data.value.data;
+                this.isAuthenticated = true;
+                
+                console.log('Profile fetched successfully', {
+                    user: this.user,
+                    isAuthenticated: this.isAuthenticated
+                });
+                
+                return true;
+            }
+            
+            console.log('Profile fetch failed');
+            this.logout();
+            return false;
+        } catch (error) {
+            console.error('Profile fetch catch block:', error);
+            this.logout();
+            return false;
         }
+    },
+
+    async refreshTokenAction(): Promise<boolean> {
+        if (!this.refreshToken) return false;
         
-        return false;
-      } catch (error) {
-        console.error('Profile fetch error:', error);
-        this.logout();
-        return false;
-      }
+        try {
+            const { apiFetch } = useApi();
+            
+            const { data, error } = await apiFetch<AuthData>('/auth/refresh-token', {
+                method: 'POST',
+                body: { refreshToken: this.refreshToken }
+            });
+            
+            if (error.value) {
+                this.logout();
+                return false;
+            }
+            
+            if (data.value && data.value.success) {
+                const authData = data.value.data;
+                this.setAuthData(authData);
+                return true;
+            }
+            
+            return false;
+        } catch (error) {
+            console.error('Token refresh error:', error);
+            this.logout();
+            return false;
+        }
     }
   }
 });
