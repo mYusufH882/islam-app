@@ -20,7 +20,6 @@
         </nav>
         <nav v-else class="flex space-x-4">
           <NuxtLink to="/auth/login" class="text-white hover:text-blue-200">Login</NuxtLink>
-          <NuxtLink to="/auth/register" class="text-white hover:text-blue-200">Register</NuxtLink>
         </nav>
       </div>
     </header>

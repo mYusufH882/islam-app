@@ -1,34 +1,35 @@
-import { useAuthStore } from "~/stores/auth";
+export default defineNuxtRouteMiddleware(async (to, from) => {
+  // Pastikan hanya dijalankan di sisi klien
+  if (process.server) return;
 
-export default defineNuxtRouteMiddleware((to, from) => {
-    // Skip middleware if we're headed to authentication pages
-    if (to.path.startsWith('/auth/')) {
-      return;
-    }
+  const authStore = useAuthStore();
   
-    const authStore = useAuthStore();
-    
-    // If trying to access admin routes
-    if (to.path.startsWith('/admin')) {
-      // Check if the user is authenticated and is an admin
+  // Tunggu inisialisasi auth store
+  await authStore.init();
+
+  // Rute yang memerlukan penanganan khusus
+  const adminRoutes = ['/admin', '/admin/users', '/admin/blog'];
+  const isAdminRoute = adminRoutes.some(route => to.path.startsWith(route));
+
+  // Logika navigasi berbasis peran
+  if (isAdminRoute) {
+      // Jika mencoba mengakses rute admin
       if (!authStore.isAuthenticated) {
-        // Not authenticated, redirect to login
-        return navigateTo('/auth/login');
+          return navigateTo('/auth/login');
       }
-      
-      // Check if user has admin role
+
+      // Pastikan hanya admin yang bisa mengakses
       if (authStore.user?.role !== 'admin') {
-        // User is authenticated but not an admin, redirect to home
-        return navigateTo('/');
+          return navigateTo('/auth/login');
       }
-    }
-    
-    // If trying to access protected user routes (you can add more paths as needed)
-    if (['/profile', '/bookmark'].some(path => to.path.startsWith(path))) {
-      // Check if the user is authenticated
-      if (!authStore.isAuthenticated) {
-        // Not authenticated, redirect to login
-        return navigateTo('/auth/login');
-      }
-    }
+
+      // Jika sudah admin, pastikan tetap di rute admin
+      return;
+  }
+
+  // Rute utama (/) untuk admin seharusnya redirect ke admin
+  if (to.path === '/' && authStore.user?.role === 'admin') {
+      console.log('Redirecting admin to admin dashboard');
+      return navigateTo('/admin');
+  }
 });

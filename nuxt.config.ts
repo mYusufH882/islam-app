@@ -1,22 +1,31 @@
 export default defineNuxtConfig({
   ssr: true,
+  routeRules: {
+      '/': { ssr: false },
+      '/auth/**': { ssr: false },
+  },
+
   modules: [
     '@nuxtjs/tailwindcss',
     '@pinia/nuxt'
   ],
+
   runtimeConfig: {
     public: {
       apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || 'http://localhost:3001/api',
       appName: process.env.APP_NAME || 'Pemuda Persis Cimsel',
     }
   },
+
   build: {
     transpile: ['@headlessui/vue']
   },
+
   plugins: [
     '~/plugins/headlessui.ts',
-    '~/plugins/auth.ts'
+    '~/plugins/auth.ts',
   ],
+
   app: {
     head: {
       title: 'Pemuda Persis Cimsel',
@@ -26,7 +35,10 @@ export default defineNuxtConfig({
       ]
     }
   },
+
   typescript: {
     strict: true
-  }
+  },
+
+  compatibilityDate: '2025-04-26'
 })

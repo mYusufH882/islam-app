@@ -171,22 +171,12 @@ async function login() {
     const success = await authStore.login(identifier.value, password.value);
     
     if (success) {
-      // If remember me is checked, we could set a longer expiry for cookies
-      // or implement additional persistence logic here
-      if (rememberMe.value) {
-        // Logic for "remember me" could be implemented here
-        // For example, we could store a flag in localStorage
-        localStorage.setItem('auth_remember', 'true');
-      }
-      
-      // Check user role and redirect accordingly
-      if (authStore.user?.role === 'admin') {
-        // Admin users go to admin dashboard
-        router.push('/admin');
-      } else {
-        // Regular users go to homepage
-        router.push('/');
-      }
+        // Redirect berdasarkan role
+        if (authStore.user?.role === 'admin') {
+            await router.push('/admin');
+        } else {
+            await router.push('/');
+        }
     } else {
       // Login failed
       error.value = 'Login gagal. Periksa email/username dan password Anda.';
