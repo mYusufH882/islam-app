@@ -174,8 +174,13 @@ definePageMeta({
 });
 
 import { ref, computed, watch } from 'vue';
-const router = useRouter();
+import { useRouter } from 'vue-router';
+import { useAuthStore } from '~/stores/auth';
 
+const router = useRouter();
+const authStore = useAuthStore();
+
+// Form fields
 const name = ref('');
 const username = ref('');
 const email = ref('');
@@ -183,52 +188,117 @@ const password = ref('');
 const confirmPassword = ref('');
 const agreeToTerms = ref(false);
 const loading = ref(false);
-const error = ref('');
+const showPassword = ref(false);
+
+// Validation errors
+const nameError = ref('');
+const usernameError = ref('');
+const emailError = ref('');
 const passwordError = ref('');
+const generalError = ref('');
+
+// Minimum password length
+const MIN_PASSWORD_LENGTH = 8;
+
+// Watch for changes to validate in real-time
+watch([name], () => {
+  if (name.value.trim() === '') {
+    nameError.value = 'Nama lengkap diperlukan';
+  } else if (name.value.length < 3) {
+    nameError.value = 'Nama harus minimal 3 karakter';
+  } else {
+    nameError.value = '';
+  }
+});
+
+watch([username], () => {
+  if (username.value.trim() === '') {
+    usernameError.value = 'Username diperlukan';
+  } else if (username.value.length < 3) {
+    usernameError.value = 'Username harus minimal 3 karakter';
+  } else if (!/^[a-zA-Z0-9_]+$/.test(username.value)) {
+    usernameError.value = 'Username hanya boleh berisi huruf, angka, dan underscore';
+  } else {
+    usernameError.value = '';
+  }
+});
+
+watch([email], () => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (email.value.trim() === '') {
+    emailError.value = 'Email diperlukan';
+  } else if (!emailRegex.test(email.value)) {
+    emailError.value = 'Format email tidak valid';
+  } else {
+    emailError.value = '';
+  }
+});
 
 // Watch for password changes to validate matching passwords
 watch([password, confirmPassword], () => {
-  if (confirmPassword.value && password.value !== confirmPassword.value) {
+  if (password.value.trim() === '') {
+    passwordError.value = 'Password diperlukan';
+  } else if (password.value.length < MIN_PASSWORD_LENGTH) {
+    passwordError.value = `Password harus minimal ${MIN_PASSWORD_LENGTH} karakter`;
+  } else if (confirmPassword.value && password.value !== confirmPassword.value) {
     passwordError.value = 'Password tidak cocok';
   } else {
     passwordError.value = '';
   }
 });
 
+// Check if form is valid
 const isFormValid = computed(() => {
   return (
     name.value.trim() !== '' &&
+    name.value.length >= 3 &&
     username.value.trim() !== '' &&
+    username.value.length >= 3 &&
+    /^[a-zA-Z0-9_]+$/.test(username.value) &&
     email.value.trim() !== '' &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value) &&
     password.value.trim() !== '' &&
+    password.value.length >= MIN_PASSWORD_LENGTH &&
     confirmPassword.value === password.value &&
-    agreeToTerms.value
+    agreeToTerms.value &&
+    !nameError.value &&
+    !usernameError.value &&
+    !emailError.value &&
+    !passwordError.value
   );
 });
 
+// Function to register a new user
 async function register() {
   if (!isFormValid.value) return;
   
   loading.value = true;
-  error.value = '';
+  generalError.value = '';
   
   try {
-    // Implement your registration logic here
-    // Example: await api.register({ name, username, email, password })
-    console.log('Registration attempt with:', {
+    // Register using auth store
+    const success = await authStore.register({
       name: name.value,
       username: username.value,
       email: email.value,
       password: password.value
     });
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // On successful registration
-    router.push('/auth/login');
-  } catch (err) {
-    error.value = 'Pendaftaran gagal. Silakan coba lagi.';
+    if (success) {
+      // On successful registration
+      router.push('/auth/login?registration_success=true');
+    } else {
+      generalError.value = 'Pendaftaran gagal. Silakan coba lagi.';
+    }
+  } catch (err: any) {
+    // Handle specific error messages from API
+    if (err?.response?.data?.message) {
+      generalError.value = err.response.data.message;
+    } else if (err?.message) {
+      generalError.value = err.message;
+    } else {
+      generalError.value = 'Pendaftaran gagal. Silakan coba lagi.';
+    }
     console.error('Registration error:', err);
   } finally {
     loading.value = false;
