@@ -83,8 +83,10 @@ export const useAuthStore = defineStore('auth', {
       this.isAuthenticated = true;
       
       // Store tokens in localStorage
-      localStorage.setItem('auth_token', authData.token);
-      localStorage.setItem('auth_refresh_token', authData.refreshToken);
+      if (process.client) {
+        localStorage.setItem('auth_token', authData.token)
+        localStorage.setItem('auth_refresh_token', authData.refreshToken)
+      }
     },
     
     logout(): void {
@@ -105,8 +107,10 @@ export const useAuthStore = defineStore('auth', {
       this.isAuthenticated = false;
       
       // Clear stored tokens
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('auth_refresh_token');
+      if (process.client) {
+        localStorage.removeItem('auth_token')
+        localStorage.removeItem('auth_refresh_token')
+      }
     },
     
     async refreshTokenAction(): Promise<boolean> {
@@ -146,15 +150,16 @@ export const useAuthStore = defineStore('auth', {
     },
     
     init(): void {
-      // Check if we have stored tokens on app initialization
-      const token = localStorage.getItem('auth_token');
-      const refreshToken = localStorage.getItem('auth_refresh_token');
-      
-      if (token && refreshToken) {
-        this.token = token;
-        this.refreshToken = refreshToken;
-        this.isAuthenticated = true;
-        this.fetchUserProfile();
+      if (process.client) {
+        const token = localStorage.getItem('auth_token')
+        const refreshToken = localStorage.getItem('auth_refresh_token')
+        
+        if (token && refreshToken) {
+          this.token = token
+          this.refreshToken = refreshToken
+          this.isAuthenticated = true
+          this.fetchUserProfile()
+        }
       }
     },
     

@@ -1,21 +1,32 @@
 export default defineNuxtConfig({
-  compatibilityDate: '2024-11-01',
-  devtools: { enabled: true },
+  ssr: true,
   modules: [
-    '@nuxtjs/tailwindcss'
+    '@nuxtjs/tailwindcss',
+    '@pinia/nuxt'
   ],
   runtimeConfig: {
     public: {
       apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || 'http://localhost:3001/api',
-      appName: process.env.APP_NAME || 'Yusuf Code App',
+      appName: process.env.APP_NAME || 'Pemuda Persis Cimsel',
     }
   },
   build: {
     transpile: ['@headlessui/vue']
   },
-  // Opsional: menambahkan plugins untuk auto-import komponen Headless UI
   plugins: [
     '~/plugins/headlessui.ts',
-    '@pinia/nuxt'
-  ]
+    '~/plugins/auth.ts'
+  ],
+  app: {
+    head: {
+      title: 'Pemuda Persis Cimsel',
+      meta: [
+        { charset: 'utf-8' },
+        { name: 'viewport', content: 'width=device-width, initial-scale=1' }
+      ]
+    }
+  },
+  typescript: {
+    strict: true
+  }
 })
