@@ -31,18 +31,17 @@
               </div>
               <input
                 id="search"
-                v-model="searchQuery"
+                v-model="filters.search"
                 class="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md"
                 placeholder="Cari nama, email, atau username"
                 type="search"
               />
             </div>
           </div>
-          <Listbox v-model="selectedRole" as="div" class="w-56">
-            <ListboxLabel class="block text-sm font-medium text-gray-700">Peran</ListboxLabel>
+          <Listbox v-model="filters.role" as="div" class="w-56">
             <div class="mt-1 relative">
               <ListboxButton class="bg-white relative w-full border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                <span class="block truncate">{{ selectedRole.name }}</span>
+                <span class="block truncate">{{ filters.role.name }}</span>
                 <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                   <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -57,7 +56,7 @@
               >
                 <ListboxOptions class="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
                   <ListboxOption
-                    v-for="role in roles"
+                    v-for="role in roleOptions"
                     :key="role.id"
                     :value="role"
                     v-slot="{ active, selected }"
@@ -119,7 +118,30 @@
                   </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                  <tr v-for="user in filteredUsers" :key="user.id">
+                  <tr v-if="loading">
+                    <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
+                      <div class="flex justify-center">
+                        <svg class="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr v-else-if="error">
+                    <td colspan="6" class="px-6 py-4 text-center text-sm text-red-500">
+                      {{ error }}
+                      <button @click="fetchUsers" class="ml-2 text-blue-600 hover:text-blue-800 underline">
+                        Coba lagi
+                      </button>
+                    </td>
+                  </tr>
+                  <tr v-else-if="users.length === 0">
+                    <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
+                      Tidak ada pengguna yang ditemukan
+                    </td>
+                  </tr>
+                  <tr v-for="user in users" :key="user.id" v-else>
                     <td class="px-6 py-4 whitespace-nowrap">
                       <div class="flex items-center">
                         <div class="flex-shrink-0 h-10 w-10">
@@ -141,17 +163,17 @@
                       {{ user.username }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                      <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="isValidRole(user.role) ? roleClasses[user.role] : ''">
+                      <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="getRoleClass(user.role)">
                         {{ user.role }}
                       </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                      <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="isValidStatus(user.status) ? statusClasses[user.status] : ''">
+                      <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="getStatusClass(user.status)">
                         {{ user.status }}
                       </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {{ user.joinDate }}
+                      {{ formatDate(user.createdAt) }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div class="flex space-x-2 justify-end">
@@ -162,11 +184,6 @@
                           Hapus
                         </button>
                       </div>
-                    </td>
-                  </tr>
-                  <tr v-if="filteredUsers.length === 0">
-                    <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
-                      Tidak ada pengguna yang ditemukan
                     </td>
                   </tr>
                 </tbody>
@@ -263,8 +280,8 @@
                           v-model="userForm.role" 
                           class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
                         >
-                          <option value="Admin">Admin</option>
-                          <option value="User">User</option>
+                          <option value="admin">Admin</option>
+                          <option value="user">User</option>
                         </select>
                       </div>
                     </div>
@@ -277,8 +294,8 @@
                           v-model="userForm.status" 
                           class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
                         >
-                          <option value="Aktif">Aktif</option>
-                          <option value="Nonaktif">Nonaktif</option>
+                          <option value="active">Aktif</option>
+                          <option value="inactive">Nonaktif</option>
                         </select>
                       </div>
                     </div>
@@ -346,7 +363,8 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, computed } from 'vue'
+  import { ref, computed, onMounted, watch } from 'vue'
+  import { userService, type UserListParams } from '~/services/userService'
   
   // Definisikan layout untuk halaman ini
   definePageMeta({
@@ -366,7 +384,7 @@
     email: string;
     role: string;
     status: string;
-    joinDate: string;
+    createdAt: string;
   }
   
   interface UserForm {
@@ -380,122 +398,49 @@
     status: string;
   }
   
-  // Data dummy untuk pengguna
-  const users = ref<User[]>([
-    {
-      id: 1,
-      name: 'Ahmad Fauzi',
-      username: 'ahmadfauzi',
-      email: 'ahmad.fauzi@example.com',
-      role: 'Admin',
-      status: 'Aktif',
-      joinDate: '15 Januari 2025'
-    },
-    {
-      id: 2,
-      name: 'Rizki Maulana',
-      username: 'rizkimaulana',
-      email: 'rizki.maulana@example.com',
-      role: 'User',
-      status: 'Aktif',
-      joinDate: '20 Februari 2025'
-    },
-    {
-      id: 3,
-      name: 'Siti Khadijah',
-      username: 'sitikhadijah',
-      email: 'siti.khadijah@example.com',
-      role: 'User',
-      status: 'Aktif',
-      joinDate: '5 Maret 2025'
-    },
-    {
-      id: 4,
-      name: 'Muhammad Yusuf',
-      username: 'muhammadyusuf',
-      email: 'muhammad.yusuf@example.com',
-      role: 'Admin',
-      status: 'Aktif',
-      joinDate: '10 April 2025'
-    },
-    {
-      id: 5,
-      name: 'Farah Dilla',
-      username: 'farahdilla',
-      email: 'farah.dilla@example.com',
-      role: 'User',
-      status: 'Nonaktif',
-      joinDate: '25 Maret 2025'
-    }
-  ])
+  interface Pagination {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  }
   
-  // Data peran
-  const roles = ref<Role[]>([
+  interface Filters {
+    search: string;
+    role: Role;
+    status?: string;
+  }
+  
+  // State untuk pengguna
+  const users = ref<User[]>([]);
+  const loading = ref(true);
+
+  const error = ref<string | null>(null);
+
+  // State untuk paginasi
+  const pagination = ref<Pagination>({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0
+  });
+  
+  // State untuk filter
+  const roleOptions = ref<Role[]>([
     { id: 0, name: 'Semua Peran' },
     { id: 1, name: 'Admin' },
     { id: 2, name: 'User' }
-  ])
+  ]);
   
-  // State untuk filter
-  const searchQuery = ref('')
-  const selectedRole = ref<Role>(roles.value[0])
-  
-  // Pengguna yang terfilter berdasarkan pencarian dan peran
-  const filteredUsers = computed(() => {
-    let result = users.value
-  
-    // Filter berdasarkan pencarian
-    if (searchQuery.value) {
-      const query = searchQuery.value.toLowerCase()
-      result = result.filter(user => 
-        user.name.toLowerCase().includes(query) || 
-        user.email.toLowerCase().includes(query) ||
-        user.username.toLowerCase().includes(query)
-      )
-    }
-  
-    // Filter berdasarkan peran
-    if (selectedRole.value.id !== 0) { // 0 adalah 'Semua Peran'
-      const roleName = selectedRole.value.name
-      result = result.filter(user => user.role === roleName)
-    }
-  
-    return result
-  })
-  
-  // Kelas warna untuk peran dan status dengan type guards
-  const roleClasses = {
-    'Admin': 'bg-purple-100 text-purple-800',
-    'User': 'bg-blue-100 text-blue-800'
-  } as const
-
-  const statusClasses = {
-    'Aktif': 'bg-green-100 text-green-800',
-    'Nonaktif': 'bg-red-100 text-red-800'
-  } as const
-
-  // Type guards untuk validasi peran dan status
-  const isValidRole = (role: string): role is keyof typeof roleClasses => {
-    return role in roleClasses
-  }
-
-  const isValidStatus = (status: string): status is keyof typeof statusClasses => {
-    return status in statusClasses
-  }
-  
-  // Mendapatkan inisial nama pengguna
-  const getUserInitials = (name: string): string => {
-    return name
-      .split(' ')
-      .map((n: string) => n[0])
-      .join('')
-      .toUpperCase()
-      .substring(0, 2)
-  }
+  const filters = ref({
+    search: '',
+    role: roleOptions.value[0],
+    status: '',
+  });
   
   // Modal tambah/edit pengguna
-  const isUserModalOpen = ref(false)
-  const editMode = ref(false)
+  const isUserModalOpen = ref(false);
+  const editMode = ref(false);
   const userForm = ref<UserForm>({
     id: null,
     name: '',
@@ -503,12 +448,50 @@
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'User',
-    status: 'Aktif'
-  })
+    role: 'user',
+    status: 'active'
+  });
   
+  // Modal konfirmasi hapus
+  const isDeleteModalOpen = ref(false);
+  const selectedUser = ref<User | null>(null);
+  
+  // Helper Functions
+  const getUserInitials = (name: string): string => {
+    return name
+      .split(' ')
+      .map((n: string) => n[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  };
+  
+  const getRoleClass = (role: string): string => {
+    return role === 'admin' 
+      ? 'bg-purple-100 text-purple-800' 
+      : 'bg-blue-100 text-blue-800';
+  };
+  
+  const getStatusClass = (status: string): string => {
+    return status === 'active' 
+      ? 'bg-green-100 text-green-800' 
+      : 'bg-red-100 text-red-800';
+  };
+  
+  const formatDate = (dateString: string): string => {
+    if (!dateString) return '-';
+    
+    const date = new Date(dateString);
+    return date.toLocaleDateString('id-ID', { 
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  };
+  
+  // Event Handlers for User Management
   const openAddUserModal = (): void => {
-    editMode.value = false
+    editMode.value = false;
     userForm.value = {
       id: null,
       name: '',
@@ -516,14 +499,14 @@
       email: '',
       password: '',
       confirmPassword: '',
-      role: 'User',
-      status: 'Aktif'
-    }
-    isUserModalOpen.value = true
-  }
+      role: 'user',
+      status: 'active'
+    };
+    isUserModalOpen.value = true;
+  };
   
   const openEditUserModal = (user: User): void => {
-    editMode.value = true
+    editMode.value = true;
     userForm.value = {
       id: user.id,
       name: user.name,
@@ -533,75 +516,128 @@
       confirmPassword: '',
       role: user.role,
       status: user.status
-    }
-    isUserModalOpen.value = true
-  }
+    };
+    isUserModalOpen.value = true;
+  };
   
   const closeUserModal = (): void => {
-    isUserModalOpen.value = false
-  }
-  
-  const saveUser = (): void => {
-    if (!editMode.value && userForm.value.password !== userForm.value.confirmPassword) {
-      alert('Password dan konfirmasi password tidak cocok')
-      return
-    }
-  
-    const currentDate = new Date().toLocaleDateString('id-ID', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    })
-  
-    if (editMode.value) {
-      // Update pengguna yang sudah ada
-      const index = users.value.findIndex(user => user.id === userForm.value.id)
-      if (index !== -1) {
-        users.value[index] = {
-          ...users.value[index],
-          name: userForm.value.name,
-          username: userForm.value.username,
-          email: userForm.value.email,
-          role: userForm.value.role,
-          status: userForm.value.status
-        }
-      }
-    } else {
-      // Tambah pengguna baru
-      const newId = Math.max(...users.value.map(user => user.id)) + 1
-      users.value.push({
-        id: newId,
-        name: userForm.value.name,
-        username: userForm.value.username,
-        email: userForm.value.email,
-        role: userForm.value.role,
-        status: userForm.value.status,
-        joinDate: currentDate
-      })
-    }
-  
-    closeUserModal()
-  }
-  
-  // Modal konfirmasi hapus
-  const isDeleteModalOpen = ref(false)
-  const selectedUser = ref<User | null>(null)
+    isUserModalOpen.value = false;
+  };
   
   const openDeleteModal = (user: User): void => {
-    selectedUser.value = user
-    isDeleteModalOpen.value = true
-  }
+    selectedUser.value = user;
+    isDeleteModalOpen.value = true;
+  };
   
   const closeDeleteModal = (): void => {
-    isDeleteModalOpen.value = false
-    selectedUser.value = null
-  }
+    isDeleteModalOpen.value = false;
+    selectedUser.value = null;
+  };
   
-  const deleteUser = (): void => {
-    if (selectedUser.value) {
-      const userId = selectedUser.value.id
-      users.value = users.value.filter(user => user.id !== userId)
-      closeDeleteModal()
+  const fetchUsers = async (): Promise<void> => {
+    loading.value = true;
+    error.value = null;
+    
+    try {
+      // Membuat parameter untuk request
+      const params: UserListParams = {
+        page: pagination.value.page,
+        limit: pagination.value.limit
+      };
+      
+      // Menambahkan filter jika ada
+      if (filters.value.search) {
+        params.search = filters.value.search;
+      }
+      
+      if (filters.value.role && filters.value.role.id !== 0) { // 0 adalah 'Semua Peran'
+        params.role = filters.value.role.name === 'Admin' ? 'admin' : 'user';
+      }
+      
+      if (filters.value.status) {
+        params.status = filters.value.status;
+      }
+      
+      // Memanggil service untuk mendapatkan data pengguna
+      const { data, error: fetchError } = await userService.getUsers(params);
+      
+      if (fetchError.value) {
+        throw new Error(fetchError.value.data?.message || 'Gagal mengambil data pengguna');
+      }
+      
+      if (data.value && data.value.success) {
+        const responseData = data.value.data;
+        users.value = responseData.users;
+        
+        // Update pagination info
+        pagination.value = {
+          page: responseData.pagination.page,
+          limit: responseData.pagination.limit,
+          total: responseData.pagination.total,
+          totalPages: responseData.pagination.totalPages
+        };
+      } else {
+        throw new Error('Gagal mengambil data pengguna');
+      }
+    } catch (err: any) {
+      console.error('Error fetching users:', err);
+      error.value = err?.message || 'Terjadi kesalahan saat mengambil data pengguna';
+      users.value = [];
+    } finally {
+      loading.value = false;
     }
-  }
+  };
+  
+  const saveUser = async (): Promise<void> => {
+    // Validate password match for new users
+    if (!editMode.value && userForm.value.password !== userForm.value.confirmPassword) {
+      alert('Password dan konfirmasi password tidak cocok');
+      return;
+    }
+    
+    try {
+      // API call akan ditambahkan nanti
+      
+      // Close modal after success
+      closeUserModal();
+      
+      // Refresh user list
+      await fetchUsers();
+    } catch (error) {
+      console.error('Error saving user:', error);
+    }
+  };
+  
+  const deleteUser = async (): Promise<void> => {
+    if (!selectedUser.value) return;
+    
+    try {
+      // API call akan ditambahkan nanti
+      
+      // Close modal after success
+      closeDeleteModal();
+      
+      // Refresh user list
+      await fetchUsers();
+    } catch (error) {
+      console.error('Error deleting user:', error);
+    }
+  };
+
+  // Tambahkan watcher untuk filter dan pagination
+  watch([() => filters.value.search, () => filters.value.role, () => filters.value.status], () => {
+    // Reset halaman ke 1 ketika filter berubah
+    pagination.value.page = 1;
+    fetchUsers();
+  }, { deep: true });
+
+  // Tambahkan watcher untuk pagination page
+  watch(() => pagination.value.page, () => {
+    fetchUsers();
+  });
+  
+  // Load users saat komponen dimount
+  onMounted(() => {
+    fetchUsers();
+  });
 </script>
