@@ -1,14 +1,15 @@
 <template>
   <div>
+    <!-- Header dan tombol tambah artikel -->
     <div class="mb-6 flex justify-between items-center">
       <div>
-        <p class="mt-1 text-sm text-gray-600">
+        <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
           Kelola artikel blog Islami Anda
         </p>
       </div>
       <NuxtLink
         to="/admin/blog/create"
-        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-dark-bg-primary"
       >
         <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
@@ -19,66 +20,68 @@
 
     <!-- Statistik Blog -->
     <div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div class="bg-white p-4 rounded-lg shadow">
+      <div class="bg-white dark:bg-dark-bg-secondary p-4 rounded-lg shadow dark:shadow-gray-800">
         <div class="flex items-center">
-          <div class="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-            <svg class="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div class="flex-shrink-0 h-10 w-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+            <svg class="h-6 w-6 text-blue-600 dark:text-blue-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
           </div>
           <div class="ml-4">
-            <div class="text-sm font-medium text-gray-500">Total Artikel</div>
-            <div class="text-lg font-semibold">{{ totalStats.total }}</div>
+            <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Artikel</div>
+            <div class="text-lg font-semibold dark:text-white">{{ totalStats.total }}</div>
           </div>
         </div>
       </div>
 
-      <div class="bg-white p-4 rounded-lg shadow">
+      <div class="bg-white dark:bg-dark-bg-secondary p-4 rounded-lg shadow dark:shadow-gray-800">
         <div class="flex items-center">
-          <div class="flex-shrink-0 h-10 w-10 bg-green-100 rounded-full flex items-center justify-center">
-            <svg class="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div class="flex-shrink-0 h-10 w-10 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+            <svg class="h-6 w-6 text-green-600 dark:text-green-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
           <div class="ml-4">
-            <div class="text-sm font-medium text-gray-500">Dipublikasikan</div>
-            <div class="text-lg font-semibold">{{ totalStats.published }}</div>
+            <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Dipublikasikan</div>
+            <div class="text-lg font-semibold dark:text-white">{{ totalStats.published }}</div>
           </div>
         </div>
       </div>
 
-      <div class="bg-white p-4 rounded-lg shadow">
+      <div class="bg-white dark:bg-dark-bg-secondary p-4 rounded-lg shadow dark:shadow-gray-800">
         <div class="flex items-center">
-          <div class="flex-shrink-0 h-10 w-10 bg-yellow-100 rounded-full flex items-center justify-center">
-            <svg class="h-6 w-6 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div class="flex-shrink-0 h-10 w-10 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center">
+            <svg class="h-6 w-6 text-yellow-600 dark:text-yellow-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
           </div>
           <div class="ml-4">
-            <div class="text-sm font-medium text-gray-500">Draft</div>
-            <div class="text-lg font-semibold">{{ totalStats.draft }}</div>
+            <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Draft</div>
+            <div class="text-lg font-semibold dark:text-white">{{ totalStats.draft }}</div>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Filter dan Pencarian -->
-    <div class="mb-6 bg-white p-4 shadow sm:rounded-md">
+    <div class="mb-6 bg-white dark:bg-dark-bg-secondary p-4 shadow dark:shadow-gray-800 sm:rounded-md">
       <div class="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-4">
         <!-- Search input -->
         <div class="flex-1">
-          <label for="search" class="sr-only">Cari artikel</label>
+          <label for="search" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Cari artikel
+          </label>
           <div class="relative rounded-md shadow-sm">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <svg class="h-5 w-5 text-gray-400 dark:text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
               </svg>
             </div>
             <input
               id="search"
               v-model="searchQuery"
-              class="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md"
+              class="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 dark:border-gray-700 dark:bg-dark-bg-primary dark:text-white rounded-md"
               placeholder="Cari artikel"
               type="search"
               @input="onSearchInput"
@@ -88,12 +91,12 @@
         
         <!-- Category filter -->
         <Listbox v-model="selectedCategory" as="div" class="w-full md:w-56">
-          <ListboxLabel class="block text-sm font-medium text-gray-700">Kategori</ListboxLabel>
+          <ListboxLabel class="block text-sm font-medium text-gray-700 dark:text-gray-300">Kategori</ListboxLabel>
           <div class="mt-1 relative">
-            <ListboxButton class="bg-white relative w-full border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-              <span class="block truncate">{{ selectedCategory.name }}</span>
+            <ListboxButton class="bg-white dark:bg-dark-bg-primary relative w-full border border-gray-300 dark:border-gray-700 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+              <span class="block truncate dark:text-white">{{ selectedCategory.name }}</span>
               <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <svg class="h-5 w-5 text-gray-400 dark:text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
                 </svg>
               </span>
@@ -104,7 +107,7 @@
               leave-from-class="opacity-100"
               leave-to-class="opacity-0"
             >
-              <ListboxOptions class="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
+              <ListboxOptions class="absolute z-10 mt-1 w-full bg-white dark:bg-dark-bg-secondary shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
                 <ListboxOption
                   v-for="category in categories"
                   :key="category.id"
@@ -112,7 +115,7 @@
                   v-slot="{ active, selected }"
                 >
                   <div :class="[
-                    active ? 'text-white bg-blue-600' : 'text-gray-900',
+                    active ? 'text-white bg-blue-600 dark:bg-blue-800' : 'text-gray-900 dark:text-white',
                     'cursor-default select-none relative py-2 pl-3 pr-9'
                   ]">
                     <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">
@@ -122,7 +125,7 @@
                     <span
                       v-if="selected"
                       :class="[
-                        active ? 'text-white' : 'text-blue-600',
+                        active ? 'text-white' : 'text-blue-600 dark:text-blue-400',
                         'absolute inset-y-0 right-0 flex items-center pr-4'
                       ]"
                     >
@@ -139,12 +142,12 @@
         
         <!-- Status filter -->
         <Listbox v-model="selectedStatus" as="div" class="w-full md:w-56">
-          <ListboxLabel class="block text-sm font-medium text-gray-700">Status</ListboxLabel>
+          <ListboxLabel class="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</ListboxLabel>
           <div class="mt-1 relative">
-            <ListboxButton class="bg-white relative w-full border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-              <span class="block truncate">{{ selectedStatus.name }}</span>
+            <ListboxButton class="bg-white dark:bg-dark-bg-primary relative w-full border border-gray-300 dark:border-gray-700 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+              <span class="block truncate dark:text-white">{{ selectedStatus.name }}</span>
               <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <svg class="h-5 w-5 text-gray-400 dark:text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
                 </svg>
               </span>
@@ -192,33 +195,33 @@
 
     <!-- Loading state -->
     <div v-if="loading" class="flex justify-center py-10">
-      <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
+      <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500 dark:border-blue-400"></div>
     </div>
-    
+
     <!-- Error state -->
-    <div v-else-if="error" class="bg-red-50 p-4 rounded-lg mb-6">
-      <p class="text-red-600">{{ error }}</p>
-      <button @click="fetchBlogs" class="mt-2 text-blue-600">Coba lagi</button>
+    <div v-else-if="error" class="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg mb-6">
+      <p class="text-red-600 dark:text-red-400">{{ error }}</p>
+      <button @click="fetchBlogs" class="mt-2 text-blue-600 dark:text-blue-400">Coba lagi</button>
     </div>
 
     <!-- Tabel artikel -->
     <div v-else class="flex flex-col">
       <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
         <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
-          <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
+          <div class="shadow overflow-hidden border-b border-gray-200 dark:border-gray-700 sm:rounded-lg">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead class="bg-gray-50 dark:bg-dark-bg-primary">
                 <tr>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Judul
                   </th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Kategori
                   </th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Status
                   </th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Tanggal Publikasi
                   </th>
                   <th scope="col" class="relative px-6 py-3">
@@ -226,49 +229,54 @@
                   </th>
                 </tr>
               </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
-                <tr v-for="article in filteredArticles" :key="article.id">
+              <tbody class="bg-white dark:bg-dark-bg-secondary divide-y divide-gray-200 dark:divide-gray-700">
+                <tr v-for="article in filteredArticles" :key="article.id" class="hover:bg-gray-50 dark:hover:bg-dark-bg-primary">
                   <td class="px-6 py-4 whitespace-nowrap">
                     <div class="flex items-center">
-                      <div class="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-md flex items-center justify-center">
-                        <svg class="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <div class="flex-shrink-0 h-10 w-10 bg-blue-100 dark:bg-blue-900 rounded-md flex items-center justify-center">
+                        <svg class="h-6 w-6 text-blue-600 dark:text-blue-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                       </div>
                       <div class="ml-4">
-                        <div class="text-sm font-medium text-gray-900">
+                        <div class="text-sm font-medium text-gray-900 dark:text-white">
                           {{ article.title }}
                         </div>
-                        <div class="text-sm text-gray-500">
+                        <div class="text-sm text-gray-500 dark:text-gray-400">
                           {{ truncateText(article.description, 50) }}
                         </div>
                       </div>
                     </div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-900">{{ article.category }}</div>
+                    <div class="text-sm text-gray-900 dark:text-white">{{ article.category }}</div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="isValidStatus(article.status) ? statusClasses[article.status] : ''">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" 
+                          :class="isValidStatus(article.status) 
+                            ? (article.status === 'Dipublikasikan' 
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                              : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200') 
+                            : ''">
                       {{ article.status }}
                     </span>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                     {{ article.date }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div class="flex space-x-2 justify-end">
-                      <NuxtLink :to="`/admin/blog/${article.id}/edit`" class="text-blue-600 hover:text-blue-900">
+                      <NuxtLink :to="`/admin/blog/${article.id}/edit`" class="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300">
                         Edit
                       </NuxtLink>
-                      <button @click="openDeleteModal(article)" class="text-red-600 hover:text-red-900">
+                      <button @click="openDeleteModal(article)" class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">
                         Hapus
                       </button>
                     </div>
                   </td>
                 </tr>
                 <tr v-if="filteredArticles.length === 0">
-                  <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
+                  <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
                     Tidak ada artikel yang ditemukan
                   </td>
                 </tr>
@@ -286,7 +294,7 @@
         :disabled="currentPage === 1"
         :class="[
           'px-3 py-1 rounded-md',
-          currentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-blue-600 hover:bg-blue-50'
+          currentPage === 1 ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed' : 'bg-white dark:bg-dark-bg-secondary text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-dark-bg-primary'
         ]"
       >
         &laquo;
@@ -298,7 +306,8 @@
         :disabled="typeof page === 'string'"
         :class="[
           typeof page === 'string' ? 'cursor-default' : '',
-          currentPage === page ? 'bg-blue-600 text-white' : 'bg-white text-blue-600 hover:bg-blue-50'
+          currentPage === page ? 'bg-blue-600 dark:bg-blue-700 text-white' : 'bg-white dark:bg-dark-bg-secondary text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-dark-bg-primary',
+          'px-3 py-1 rounded-md'
         ]"
       >
         {{ page }}
@@ -309,7 +318,7 @@
         :disabled="currentPage === totalPages"
         :class="[
           'px-3 py-1 rounded-md',
-          currentPage === totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-blue-600 hover:bg-blue-50'
+          currentPage === totalPages ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed' : 'bg-white dark:bg-dark-bg-secondary text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-dark-bg-primary'
         ]"
       >
         &raquo;
@@ -318,16 +327,16 @@
 
     <!-- Modal konfirmasi hapus -->
     <Dialog :open="isDeleteModalOpen" @close="closeDeleteModal" class="relative z-50">
-      <div class="fixed inset-0 bg-black/30" aria-hidden="true" />
+      <div class="fixed inset-0 bg-black/30 dark:bg-black/50" aria-hidden="true" />
 
       <div class="fixed inset-0 overflow-y-auto">
         <div class="flex min-h-full items-center justify-center p-4">
-          <DialogPanel class="mx-auto max-w-md rounded-lg bg-white p-6 shadow-xl">
-            <DialogTitle class="text-lg font-medium leading-6 text-gray-900">
+          <DialogPanel class="mx-auto max-w-md rounded-lg bg-white dark:bg-dark-bg-secondary p-6 shadow-xl">
+            <DialogTitle class="text-lg font-medium leading-6 text-gray-900 dark:text-white">
               Hapus Artikel
             </DialogTitle>
             <div class="mt-2">
-              <p class="text-sm text-gray-500">
+              <p class="text-sm text-gray-500 dark:text-gray-400">
                 Apakah Anda yakin ingin menghapus artikel "{{ selectedArticle?.title }}"? Tindakan ini tidak dapat dibatalkan.
               </p>
             </div>
@@ -335,14 +344,14 @@
             <div class="mt-4 flex space-x-2 justify-end">
               <button
                 type="button"
-                class="inline-flex justify-center rounded-md border border-transparent bg-gray-100 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
+                class="inline-flex justify-center rounded-md border border-transparent bg-gray-100 dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
                 @click="closeDeleteModal"
               >
                 Batal
               </button>
               <button
                 type="button"
-                class="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
+                class="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:focus:ring-offset-dark-bg-secondary"
                 @click="deleteArticle"
               >
                 Hapus
@@ -547,15 +556,15 @@ const pageNumbers = computed(() => {
   return pages;
 });
 
-// Kelas warna untuk status artikel
-const statusClasses = {
-  'Dipublikasikan': 'bg-green-100 text-green-800',
-  'Draft': 'bg-yellow-100 text-yellow-800'
-} as const;
-
-// Type guard untuk memeriksa apakah status valid
+// TypeScript helper untuk status
 const isValidStatus = (status: string): status is keyof typeof statusClasses => {
-  return status in statusClasses;
+  return Object.keys(statusClasses).includes(status);
+};
+
+// Kelas untuk status artikel dengan dukungan dark mode
+const statusClasses: Record<string, string> = {
+  'Dipublikasikan': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+  'Draft': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
 };
 
 // Event handlers

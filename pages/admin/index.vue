@@ -1,14 +1,14 @@
 <template>
   <div>
     <div class="flex justify-between items-center mb-6">
-      <p class="text-sm text-gray-600">
+      <p class="text-sm text-gray-600 dark:text-gray-400">
         Selamat datang di Panel Admin Pemuda Persis Cimsel
       </p>
       
       <!-- Tombol refresh data -->
       <button 
         @click="refreshDashboard" 
-        class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+        class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:bg-blue-700 dark:hover:bg-blue-800 dark:focus:ring-offset-dark-bg-primary"
         :disabled="isLoading"
       >
         <svg 
@@ -57,21 +57,21 @@
       <!-- Ringkasan Statistik Card -->
       <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-8">
         <!-- Card Statistik Blog -->
-        <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="bg-white dark:bg-dark-bg-secondary overflow-hidden shadow dark:shadow-gray-800 rounded-lg">
           <div class="p-5">
             <div class="flex items-center">
-              <div class="flex-shrink-0 h-12 w-12 bg-primary-100 rounded-md flex items-center justify-center">
-                <svg class="h-6 w-6 text-primary-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div class="flex-shrink-0 h-12 w-12 bg-primary-100 dark:bg-blue-900 rounded-md flex items-center justify-center">
+                <svg class="h-6 w-6 text-primary-600 dark:text-blue-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
                 </svg>
               </div>
               <div class="ml-5 w-0 flex-1">
                 <dl>
-                  <dt class="text-sm font-medium text-gray-500 truncate break-words whitespace-normal">
+                  <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate break-words whitespace-normal">
                     Total Artikel Blog
                   </dt>
                   <dd>
-                    <div class="text-lg font-medium text-gray-900">
+                    <div class="text-lg font-medium text-gray-900 dark:text-white">
                       {{ dashboardStore.blogStats.total }}
                     </div>
                   </dd>
@@ -79,9 +79,9 @@
               </div>
             </div>
           </div>
-          <div class="bg-gray-50 px-5 py-3">
+          <div class="bg-gray-50 dark:bg-dark-bg-primary px-5 py-3">
             <div class="text-sm">
-              <NuxtLink to="/admin/blog" class="font-medium text-primary-700 hover:text-primary-900">
+              <NuxtLink to="/admin/blog" class="font-medium text-primary-700 dark:text-blue-400 hover:text-primary-900 dark:hover:text-blue-300">
                 Lihat semua
               </NuxtLink>
             </div>
@@ -89,21 +89,21 @@
         </div>
 
         <!-- Card Statistik Pengguna -->
-        <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="bg-white dark:bg-dark-bg-secondary overflow-hidden shadow dark:shadow-gray-800 rounded-lg">
           <div class="p-5">
             <div class="flex items-center">
-              <div class="flex-shrink-0 h-12 w-12 bg-primary-100 rounded-md flex items-center justify-center">
-                <svg class="h-6 w-6 text-primary-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div class="flex-shrink-0 h-12 w-12 bg-primary-100 dark:bg-blue-900 rounded-md flex items-center justify-center">
+                <svg class="h-6 w-6 text-primary-600 dark:text-blue-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
               </div>
               <div class="ml-5 w-0 flex-1">
                 <dl>
-                  <dt class="text-sm font-medium text-gray-500 break-words whitespace-normal">
+                  <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 break-words whitespace-normal">
                     Total Pengguna
                   </dt>
                   <dd>
-                    <div class="text-lg font-medium text-gray-900">
+                    <div class="text-lg font-medium text-gray-900 dark:text-white">
                       {{ dashboardStore.userStats.total }}
                     </div>
                   </dd>
@@ -111,9 +111,9 @@
               </div>
             </div>
           </div>
-          <div class="bg-gray-50 px-5 py-3">
+          <div class="bg-gray-50 dark:bg-dark-bg-primary px-5 py-3">
             <div class="text-sm">
-              <NuxtLink to="/admin/users" class="font-medium text-primary-700 hover:text-primary-900">
+              <NuxtLink to="/admin/users" class="font-medium text-primary-700 dark:text-blue-400 hover:text-primary-900 dark:hover:text-blue-300">
                 Lihat semua
               </NuxtLink>
             </div>
@@ -121,21 +121,21 @@
         </div>
 
         <!-- Card Statistik Bookmark -->
-        <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="bg-white dark:bg-dark-bg-secondary overflow-hidden shadow dark:shadow-gray-800 rounded-lg">
           <div class="p-5">
             <div class="flex items-center">
-              <div class="flex-shrink-0 h-12 w-12 bg-primary-100 rounded-md flex items-center justify-center">
-                <svg class="h-6 w-6 text-primary-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div class="flex-shrink-0 h-12 w-12 bg-primary-100 dark:bg-blue-900 rounded-md flex items-center justify-center">
+                <svg class="h-6 w-6 text-primary-600 dark:text-blue-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                 </svg>
               </div>
               <div class="ml-5 w-0 flex-1">
                 <dl>
-                  <dt class="text-sm font-medium text-gray-500 break-words whitespace-normal">
+                  <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 break-words whitespace-normal">
                     Total Bookmark
                   </dt>
                   <dd>
-                    <div class="text-lg font-medium text-gray-900">
+                    <div class="text-lg font-medium text-gray-900 dark:text-white">
                       {{ dashboardStore.bookmarkStats.total }}
                     </div>
                   </dd>
@@ -143,9 +143,9 @@
               </div>
             </div>
           </div>
-          <div class="bg-gray-50 px-5 py-3">
+          <div class="bg-gray-50 dark:bg-dark-bg-primary px-5 py-3">
             <div class="text-sm">
-              <a href="/admin/bookmark" class="font-medium text-primary-700 hover:text-primary-900">
+              <a href="/admin/bookmark" class="font-medium text-primary-700 dark:text-blue-400 hover:text-primary-900 dark:hover:text-blue-300">
                 Lihat statistik
               </a>
             </div>
@@ -154,16 +154,16 @@
       </div>
       
       <!-- Pesan error jika gagal memuat data statistik -->
-      <div v-if="dashboardStore.statsError" class="mb-6 bg-red-50 border-l-4 border-red-400 p-4">
+      <div v-if="dashboardStore.statsError" class="mb-6 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 dark:border-red-700 p-4">
         <div class="flex">
           <div class="flex-shrink-0">
-            <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <svg class="h-5 w-5 text-red-400 dark:text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
             </svg>
           </div>
           <div class="ml-3">
-            <p class="text-sm text-red-700">{{ dashboardStore.statsError }}</p>
-            <button @click="dashboardStore.fetchStats" class="mt-2 text-sm text-red-700 underline">Coba lagi</button>
+            <p class="text-sm text-red-700 dark:text-red-400">{{ dashboardStore.statsError }}</p>
+            <button @click="dashboardStore.fetchStats" class="mt-2 text-sm text-red-700 dark:text-red-400 underline">Coba lagi</button>
           </div>
         </div>
       </div>
@@ -171,19 +171,19 @@
       <!-- Grafik dan Statistik Detail -->
       <div class="grid grid-cols-1 gap-5 lg:grid-cols-2 mb-8">
         <!-- Grafik Pertumbuhan Blog -->
-        <div class="bg-white p-6 rounded-lg shadow">
-          <h2 class="text-lg font-medium text-gray-900 mb-4">Artikel Blog Bulanan</h2>
+        <div class="bg-white dark:bg-dark-bg-secondary p-6 rounded-lg shadow dark:shadow-gray-800">
+          <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Artikel Blog Bulanan</h2>
           
           <!-- Loading state -->
           <div v-if="dashboardStore.loadingCharts" class="h-64 flex items-center justify-center">
-            <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary-600"></div>
+            <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary-600 dark:border-blue-500"></div>
           </div>
           
           <!-- Error state -->
           <div v-else-if="dashboardStore.chartsError" class="h-64 flex items-center justify-center">
             <div class="text-center">
-              <p class="text-red-500 mb-2">{{ dashboardStore.chartsError }}</p>
-              <button @click="dashboardStore.fetchChartData" class="text-blue-600 underline">Coba lagi</button>
+              <p class="text-red-500 dark:text-red-400 mb-2">{{ dashboardStore.chartsError }}</p>
+              <button @click="dashboardStore.fetchChartData" class="text-blue-600 dark:text-blue-400 underline">Coba lagi</button>
             </div>
           </div>
           
@@ -194,19 +194,19 @@
         </div>
         
         <!-- Grafik Pertumbuhan Pengguna -->
-        <div class="bg-white p-6 rounded-lg shadow">
-          <h2 class="text-lg font-medium text-gray-900 mb-4">Pengguna Baru Bulanan</h2>
+        <div class="bg-white dark:bg-dark-bg-secondary p-6 rounded-lg shadow dark:shadow-gray-800">
+          <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Pengguna Baru Bulanan</h2>
           
           <!-- Loading state -->
           <div v-if="dashboardStore.loadingCharts" class="h-64 flex items-center justify-center">
-            <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary-600"></div>
+            <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary-600 dark:border-blue-500"></div>
           </div>
           
           <!-- Error state -->
           <div v-else-if="dashboardStore.chartsError" class="h-64 flex items-center justify-center">
             <div class="text-center">
-              <p class="text-red-500 mb-2">{{ dashboardStore.chartsError }}</p>
-              <button @click="dashboardStore.fetchChartData" class="text-blue-600 underline">Coba lagi</button>
+              <p class="text-red-500 dark:text-red-400 mb-2">{{ dashboardStore.chartsError }}</p>
+              <button @click="dashboardStore.fetchChartData" class="text-blue-600 dark:text-blue-400 underline">Coba lagi</button>
             </div>
           </div>
           
@@ -218,19 +218,19 @@
       </div>
       
       <!-- Distribusi Konten Blog -->
-      <div class="bg-white p-6 rounded-lg shadow mb-8">
-        <h2 class="text-lg font-medium text-gray-900 mb-4">Distribusi Konten Blog</h2>
+      <div class="bg-white dark:bg-dark-bg-secondary p-6 rounded-lg shadow dark:shadow-gray-800 mb-8">
+        <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Distribusi Konten Blog</h2>
         
         <!-- Loading state -->
         <div v-if="dashboardStore.loadingCharts" class="h-64 flex items-center justify-center">
-          <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary-600"></div>
+          <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary-600 dark:border-blue-500"></div>
         </div>
         
         <!-- Error state -->
         <div v-else-if="dashboardStore.chartsError" class="h-64 flex items-center justify-center">
           <div class="text-center">
-            <p class="text-red-500 mb-2">{{ dashboardStore.chartsError }}</p>
-            <button @click="dashboardStore.fetchChartData" class="text-blue-600 underline">Coba lagi</button>
+            <p class="text-red-500 dark:text-red-400 mb-2">{{ dashboardStore.chartsError }}</p>
+            <button @click="dashboardStore.fetchChartData" class="text-blue-600 dark:text-blue-400 underline">Coba lagi</button>
           </div>
         </div>
         
@@ -242,15 +242,15 @@
             </div>
           </div>
           <div class="w-full lg:w-2/3 mt-6 lg:mt-0">
-            <h3 class="text-sm font-medium text-gray-700 mb-3">Top Kategori</h3>
+            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Top Kategori</h3>
             <div class="space-y-4">
               <div v-for="(category, index) in dashboardStore.categoryDistribution" :key="index">
                 <div class="flex items-center justify-between">
-                  <span class="text-sm font-medium text-gray-600">{{ category.name }}</span>
-                  <span class="text-sm font-medium text-gray-900">{{ category.count }} artikel</span>
+                  <span class="text-sm font-medium text-gray-600 dark:text-gray-400">{{ category.name }}</span>
+                  <span class="text-sm font-medium text-gray-900 dark:text-white">{{ category.count }} artikel</span>
                 </div>
-                <div class="mt-2 w-full bg-gray-200 rounded-full h-2">
-                  <div class="bg-primary-600 h-2 rounded-full" :style="{ width: `${category.percentage}%` }"></div>
+                <div class="mt-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div class="bg-primary-600 dark:bg-blue-500 h-2 rounded-full" :style="{ width: `${category.percentage}%` }"></div>
                 </div>
               </div>
             </div>
@@ -260,52 +260,52 @@
 
       <!-- Aktivitas Terbaru -->
       <div class="mt-8">
-        <h2 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+        <h2 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
           Aktivitas Terbaru
         </h2>
         
         <!-- Loading state -->
-        <div v-if="dashboardStore.loadingActivities" class="bg-white p-6 rounded-md shadow text-center">
-          <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary-600 mx-auto"></div>
-          <p class="mt-2 text-gray-500">Memuat aktivitas terbaru...</p>
+        <div v-if="dashboardStore.loadingActivities" class="bg-white dark:bg-dark-bg-secondary p-6 rounded-md shadow dark:shadow-gray-800 text-center">
+          <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary-600 dark:border-blue-500 mx-auto"></div>
+          <p class="mt-2 text-gray-500 dark:text-gray-400">Memuat aktivitas terbaru...</p>
         </div>
         
         <!-- Error state -->
-        <div v-else-if="dashboardStore.activitiesError" class="bg-white p-6 rounded-md shadow text-center">
-          <p class="text-red-500 mb-2">{{ dashboardStore.activitiesError }}</p>
-          <button @click="dashboardStore.fetchRecentActivities" class="text-blue-600 underline">Coba lagi</button>
+        <div v-else-if="dashboardStore.activitiesError" class="bg-white dark:bg-dark-bg-secondary p-6 rounded-md shadow dark:shadow-gray-800 text-center">
+          <p class="text-red-500 dark:text-red-400 mb-2">{{ dashboardStore.activitiesError }}</p>
+          <button @click="dashboardStore.fetchRecentActivities" class="text-blue-600 dark:text-blue-400 underline">Coba lagi</button>
         </div>
         
         <!-- Empty state -->
-        <div v-else-if="dashboardStore.recentActivities.length === 0" class="bg-white p-6 rounded-md shadow text-center">
-          <p class="text-gray-500">Belum ada aktivitas terbaru</p>
+        <div v-else-if="dashboardStore.recentActivities.length === 0" class="bg-white dark:bg-dark-bg-secondary p-6 rounded-md shadow dark:shadow-gray-800 text-center">
+          <p class="text-gray-500 dark:text-gray-400">Belum ada aktivitas terbaru</p>
         </div>
         
         <!-- Activity list -->
-        <div v-else class="bg-white shadow overflow-hidden rounded-md">
-          <ul role="list" class="divide-y divide-gray-200">
-            <li v-for="activity in dashboardStore.recentActivities" :key="activity.id" class="px-6 py-4 relative hover:bg-gray-50">
+        <div v-else class="bg-white dark:bg-dark-bg-secondary shadow dark:shadow-gray-800 overflow-hidden rounded-md">
+          <ul role="list" class="divide-y divide-gray-200 dark:divide-gray-700">
+            <li v-for="activity in dashboardStore.recentActivities" :key="activity.id" class="px-6 py-4 relative hover:bg-gray-50 dark:hover:bg-dark-bg-primary">
               <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
                   <NuxtLink 
                     :to="activity.link" 
-                    class="flex-1 min-w-0 text-sm font-medium text-primary-600 hover:text-primary-800 truncate"
+                    class="flex-1 min-w-0 text-sm font-medium text-primary-600 dark:text-blue-400 hover:text-primary-800 dark:hover:text-blue-300 truncate"
                   >
                     {{ activity.title }}
                   </NuxtLink>
                   <span 
                     class="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full" 
-                    :class="activityTypeClasses[activity.type] || 'bg-gray-100 text-gray-800'"
+                    :class="getActivityTypeClasses(activity.type)"
                   >
                     {{ activity.type }}
                   </span>
                 </div>
-                <div class="flex items-center text-sm text-gray-500">
+                <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
                   <span class="truncate">{{ activity.user }}</span>
                   <span class="mx-1">•</span>
                   <span class="whitespace-nowrap flex items-center">
                     <svg 
-                      class="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" 
+                      class="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400 dark:text-gray-500" 
                       xmlns="http://www.w3.org/2000/svg" 
                       viewBox="0 0 20 20" 
                       fill="currentColor"
@@ -333,6 +333,10 @@ import { ref, onMounted, watch, computed } from 'vue'
 import Chart from 'chart.js/auto'
 import { useDashboardStore } from '~/stores/dashboard.store';
 import DashboardSkeleton from '@/components/admin/DashboardSkeleton.vue';
+import { useThemeStore } from '~/stores/theme.store';
+
+const themeStore = useThemeStore();
+const isDarkMode = computed(() => themeStore.darkMode);
 
 // Definisikan layout untuk halaman ini
 definePageMeta({
@@ -369,6 +373,16 @@ const activityTypeClasses: Record<string, string> = {
   'Bookmark': 'bg-yellow-100 text-yellow-800'
 };
 
+const getActivityTypeClasses = (type: string): string => {
+  const typeClasses: Record<string, string> = {
+    'Blog': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+    'User': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+    'Bookmark': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+  };
+
+  return typeClasses[type] || 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+};
+
 // Format date helper
 const formatDate = (dateString: string): string => {
   const date = new Date(dateString);
@@ -391,6 +405,11 @@ const createCharts = () => {
   if (blogChartInstance) blogChartInstance.destroy();
   if (userChartInstance) userChartInstance.destroy();
   if (categoryChartInstance) categoryChartInstance.destroy();
+
+  const textColor = isDarkMode.value ? '#f3f4f6' : '#374151';
+  const gridColor = isDarkMode.value ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+  const borderColor = isDarkMode.value ? '#3b82f6' : '#4F46E5';
+  const backgroundColor = isDarkMode.value ? 'rgba(59, 130, 246, 0.2)' : 'rgba(79, 70, 229, 0.1)';
   
   // Grafik Blog
   if (blogChart.value) {
@@ -402,8 +421,8 @@ const createCharts = () => {
           {
             label: 'Artikel Blog',
             data: dashboardStore.blogChartData.data,
-            borderColor: '#4F46E5',
-            backgroundColor: 'rgba(79, 70, 229, 0.1)',
+            borderColor: borderColor,
+            backgroundColor: backgroundColor,
             tension: 0.3,
             fill: true
           }
@@ -414,14 +433,36 @@ const createCharts = () => {
         maintainAspectRatio: false,
         plugins: {
           legend: {
-            display: false
+            display: false,
+            labels: {
+              color: textColor
+            }
+          },
+          tooltip: {
+            backgroundColor: isDarkMode.value ? '#1e293b' : '#fff',
+            titleColor: isDarkMode.value ? '#fff' : '#000',
+            bodyColor: isDarkMode.value ? '#f3f4f6' : '#374151',
+            borderColor: isDarkMode.value ? '#3b82f6' : '#e5e7eb',
+            borderWidth: 1
           }
         },
         scales: {
           y: {
             beginAtZero: true,
             ticks: {
-              precision: 0
+              precision: 0,
+              color: textColor
+            },
+            grid: {
+              color: gridColor
+            }
+          },
+          x: {
+            ticks: {
+              color: textColor
+            },
+            grid: {
+              color: gridColor
             }
           }
         }

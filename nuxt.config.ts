@@ -24,6 +24,7 @@ export default defineNuxtConfig({
   plugins: [
     '~/plugins/headlessui.ts',
     '~/plugins/auth.ts',
+    '~/plugins/dark-mode.client.ts',
   ],
 
   app: {

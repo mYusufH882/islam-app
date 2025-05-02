@@ -2,27 +2,27 @@
     <div>
       <!-- Ringkasan Statistik Card Skeleton -->
       <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-        <div v-for="i in 4" :key="i" class="bg-white overflow-hidden shadow rounded-lg">
+        <div v-for="i in 4" :key="i" class="bg-white dark:bg-dark-bg-secondary overflow-hidden shadow dark:shadow-gray-800 rounded-lg">
           <div class="p-5">
             <div class="flex items-center">
-              <div class="flex-shrink-0 h-12 w-12 bg-gray-200 rounded-md animate-pulse"></div>
+              <div class="flex-shrink-0 h-12 w-12 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse"></div>
               <div class="ml-5 w-0 flex-1">
-                <div class="h-4 bg-gray-200 rounded w-3/4 mb-2 animate-pulse"></div>
-                <div class="h-6 bg-gray-200 rounded w-1/3 animate-pulse"></div>
+                <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2 animate-pulse"></div>
+                <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/3 animate-pulse"></div>
               </div>
             </div>
           </div>
-          <div class="bg-gray-50 px-5 py-3">
-            <div class="h-4 bg-gray-200 rounded w-1/4 animate-pulse"></div>
+          <div class="bg-gray-50 dark:bg-dark-bg-primary px-5 py-3">
+            <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4 animate-pulse"></div>
           </div>
         </div>
       </div>
-      
+    
       <!-- Grafik Skeleton -->
       <div class="grid grid-cols-1 gap-5 lg:grid-cols-2 mb-8">
-        <div v-for="i in 2" :key="i" class="bg-white p-6 rounded-lg shadow">
-          <div class="h-5 bg-gray-200 rounded w-1/3 mb-4 animate-pulse"></div>
-          <div class="h-64 bg-gray-100 rounded animate-pulse"></div>
+        <div v-for="i in 2" :key="i" class="bg-white dark:bg-dark-bg-secondary p-6 rounded-lg shadow dark:shadow-gray-800">
+          <div class="h-5 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-4 animate-pulse"></div>
+          <div class="h-64 bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
         </div>
       </div>
       
