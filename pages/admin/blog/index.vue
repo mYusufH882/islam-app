@@ -17,6 +17,52 @@
       </NuxtLink>
     </div>
 
+    <!-- Statistik Blog -->
+    <div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="bg-white p-4 rounded-lg shadow">
+        <div class="flex items-center">
+          <div class="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+            <svg class="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+          </div>
+          <div class="ml-4">
+            <div class="text-sm font-medium text-gray-500">Total Artikel</div>
+            <div class="text-lg font-semibold">{{ totalStats.total }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-lg shadow">
+        <div class="flex items-center">
+          <div class="flex-shrink-0 h-10 w-10 bg-green-100 rounded-full flex items-center justify-center">
+            <svg class="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div class="ml-4">
+            <div class="text-sm font-medium text-gray-500">Dipublikasikan</div>
+            <div class="text-lg font-semibold">{{ totalStats.published }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-lg shadow">
+        <div class="flex items-center">
+          <div class="flex-shrink-0 h-10 w-10 bg-yellow-100 rounded-full flex items-center justify-center">
+            <svg class="h-6 w-6 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+          </div>
+          <div class="ml-4">
+            <div class="text-sm font-medium text-gray-500">Draft</div>
+            <div class="text-lg font-semibold">{{ totalStats.draft }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Filter dan Pencarian -->
     <div class="mb-6 bg-white p-4 shadow sm:rounded-md">
       <div class="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-4">
@@ -360,6 +406,40 @@ interface Article {
 const searchQuery = ref('');
 const isDeleteModalOpen = ref(false);
 const selectedArticle = ref<Article | null>(null);
+
+const totalStats = ref({
+  total: 0,
+  published: 0,
+  draft: 0
+});
+
+// Fungsi untuk mengambil statistik blog
+const fetchBlogStats = async () => {
+  try {
+    const { apiFetch } = useApi();
+    const { data, error } = await apiFetch('/blogs/stats');
+    
+    if (error.value) {
+      console.error('Error fetching blog stats:', error.value);
+      return;
+    }
+    
+    if (data.value && data.value.success) {
+      totalStats.value = data.value.data;
+    }
+  } catch (err) {
+    console.error('Error fetching blog stats:', err);
+  }
+};
+
+onMounted(async () => {
+  // Kode lain yang sudah ada
+  
+  // Tambahkan ini
+  await fetchBlogStats();
+  
+  // Kode lain yang sudah ada
+});
 
 // Status filter options
 const statuses = ref<Status[]>([
