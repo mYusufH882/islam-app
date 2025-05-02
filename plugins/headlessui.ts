@@ -12,6 +12,7 @@ import {
   DisclosurePanel,
   Listbox,
   ListboxButton,
+  ListboxLabel,
   ListboxOption,
   ListboxOptions,
   Popover,
@@ -48,6 +49,7 @@ export default defineNuxtPlugin((nuxtApp) => {
   
   nuxtApp.vueApp.component('Listbox', Listbox)
   nuxtApp.vueApp.component('ListboxButton', ListboxButton)
+  nuxtApp.vueApp.component('ListboxLabel', ListboxLabel)
   nuxtApp.vueApp.component('ListboxOption', ListboxOption)
   nuxtApp.vueApp.component('ListboxOptions', ListboxOptions)
   
@@ -60,8 +62,8 @@ export default defineNuxtPlugin((nuxtApp) => {
   
   nuxtApp.vueApp.component('Switch', Switch)
   
-  nuxtApp.vueApp.component('TabGroup', TabGroup)
   nuxtApp.vueApp.component('Tab', Tab)
+  nuxtApp.vueApp.component('TabGroup', TabGroup)
   nuxtApp.vueApp.component('TabList', TabList)
   nuxtApp.vueApp.component('TabPanel', TabPanel)
   nuxtApp.vueApp.component('TabPanels', TabPanels)
