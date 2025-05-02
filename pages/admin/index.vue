@@ -145,7 +145,7 @@
           </div>
           <div class="bg-gray-50 px-5 py-3">
             <div class="text-sm">
-              <a href="#" class="font-medium text-primary-700 hover:text-primary-900">
+              <a href="/admin/bookmark" class="font-medium text-primary-700 hover:text-primary-900">
                 Lihat statistik
               </a>
             </div>
