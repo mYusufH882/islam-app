@@ -8,6 +8,7 @@ module.exports = {
     './nuxt.config.{js,ts}',
     './app.vue',
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -24,6 +25,14 @@ module.exports = {
           800: '#115e59',
           900: '#134e4a',
           950: '#042f2e',
+        },
+        'dark': {
+          'bg-primary': '#121826',
+          'bg-secondary': '#1e293b',
+          'text-primary': '#f3f4f6',
+          'text-secondary': '#9ca3af',
+          'border': '#374151',
+          'accent': '#3b82f6',
         },
       },
     },
