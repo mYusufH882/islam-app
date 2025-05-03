@@ -55,6 +55,7 @@ export default defineNuxtConfig({
 
   // Setelan eksperimental untuk membantu mengatasi masalah hydration
   vite: {
+    assetsInclude: ['**/*.jpg', '**/*.png', '**/*.svg', '**/*.gif'],
     vue: {
       template: {
         compilerOptions: {
