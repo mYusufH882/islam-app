@@ -1,10 +1,11 @@
-// Define standard API response structure
+import type { Category, Blog } from '~/types/blog';  // Menggunakan import type
+
 export interface ApiResponse<T = any> {
     success: boolean;
     data: T;
     message?: string;
 }
-  
+
 // Define common response types
 export interface AuthData {
     user: UserProfile;
@@ -20,28 +21,11 @@ export interface UserProfile {
     role: string;
     lastLogin?: string;
 }
-  
-// Blog related interfaces
-export interface BlogPost {
-    id: number;
-    title: string;
-    content: string;
-    image?: string;
-    status: 'draft' | 'published';
-    publishedAt?: string;
-    userId: number;
-    categoryId: number;
-    category?: Category;
-    author?: UserProfile;
-}
-  
-export interface Category {
-    id: number;
-    name: string;
-    description?: string;
-}
-  
-// Helper function to check if a response is successful
+
+// Gunakan interface dari types.ts
+export type BlogPost = Blog;
+
+// Helper function
 export const isSuccessResponse = <T>(response: any): response is ApiResponse<T> => {
     return response && 
             typeof response === 'object' && 
