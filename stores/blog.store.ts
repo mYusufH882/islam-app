@@ -42,57 +42,55 @@ export const useBlogStore = defineStore('blog', {
 
     actions: {
         async fetchBlogs() {
-            this.loading = true;
-            this.error = null;
-
-            try {
-                const { apiFetch } = useApi();
-                
-                const params = new URLSearchParams();
-                
-                // Add search parameter if present
-                if (this.searchQuery) {
-                    params.append('search', this.searchQuery);
-                }
-                
-                // Add category parameter if present
-                if (this.categoryFilter !== null) {
-                    params.append('category', this.categoryFilter.toString());
-                }
-                
-                // Important change: Only add status parameter if specific status is requested
-                // When "all" is selected, don't append any status parameter so the API returns all statuses
-                if (this.statusFilter && this.statusFilter !== 'all') {
-                    params.append('status', this.statusFilter);
-                }
-                
-                // Add pagination parameters
-                params.append('page', this.pagination.page.toString());
-                params.append('limit', this.pagination.limit.toString());
-                
-                // Debugging
-                console.log(`Fetching blogs with params: ${params.toString()}`);
-                
-                const { data, error } = await apiFetch<{
-                    blogs: Blog[];
-                    pagination: BlogPagination;
-                }>(`/blogs?${params.toString()}`);
-                
-                if (error.value) {
-                    throw new Error(error.value.message || 'Failed to fetch blogs');
-                }
-                
-                if (data.value && data.value.success) {
-                    this.blogs = data.value.data.blogs;
-                    this.pagination = data.value.data.pagination;
-                    console.log('Fetched blogs with statuses:', this.blogs.map(blog => blog.status));
-                }
-            } catch (err: any) {
-                this.error = err.message || 'An error occurred while fetching blogs';
-                console.error('Fetch blogs error:', err);
-            } finally {
-                this.loading = false;
-            }
+    this.loading = true;
+    this.error = null;
+  
+    try {
+      const { apiFetch } = useApi();
+      
+      const params = new URLSearchParams();
+      
+      // Add search parameter if present
+      if (this.searchQuery) {
+        params.append('search', this.searchQuery);
+      }
+      
+      // Add category parameter if present
+      if (this.categoryFilter !== null) {
+        params.append('category', this.categoryFilter.toString());
+      }
+      
+      // Important: Only add status parameter if a specific status is selected
+      if (this.statusFilter !== null) {
+        params.append('status', this.statusFilter);
+      }
+      
+      // Add pagination parameters
+      params.append('page', this.pagination.page.toString());
+      params.append('limit', this.pagination.limit.toString());
+      
+      console.log(`Fetching blogs with params: ${params.toString()}`);
+      
+      const { data, error } = await apiFetch<{
+        blogs: Blog[];
+        pagination: BlogPagination;
+      }>(`/blogs?${params.toString()}`);
+      
+      if (error.value) {
+        throw new Error(error.value.message || 'Failed to fetch blogs');
+      }
+      
+      if (data.value && data.value.success) {
+        this.blogs = data.value.data.blogs;
+        this.pagination = data.value.data.pagination;
+        console.log('Fetched blogs with statuses:', this.blogs.map(blog => blog.status));
+      }
+    } catch (err) {
+      this.error = err.message || 'An error occurred while fetching blogs';
+      console.error('Fetch blogs error:', err);
+    } finally {
+      this.loading = false;
+    }
         },
 
         async fetchCategories() {

@@ -399,7 +399,7 @@ interface Category {
 
 interface Status {
   id: number;
-  value: string;
+  value: string | null;
   name: string;
 }
 
@@ -423,6 +423,13 @@ const totalStats = ref({
   draft: 0
 });
 
+// Status filter options - Modified to include null value for "All"
+const statuses = ref<Status[]>([
+  { id: 0, value: null, name: 'Semua Status' },
+  { id: 1, value: 'published', name: 'Dipublikasikan' },
+  { id: 2, value: 'draft', name: 'Draft' }
+]);
+
 // Fungsi untuk mengambil statistik blog
 const fetchBlogStats = async () => {
   try {
@@ -442,39 +449,22 @@ const fetchBlogStats = async () => {
   }
 };
 
-onMounted(async () => {
-  // Kode lain yang sudah ada
-  
-  // Tambahkan ini
-  await fetchBlogStats();
-  
-  // Kode lain yang sudah ada
-});
-
-// Status filter options
-const statuses = ref<Status[]>([
-  // { id: 0, value: 'all', name: 'Semua Status' },
-  { id: 1, value: 'published', name: 'Dipublikasikan' },
-  { id: 2, value: 'draft', name: 'Draft' }
-]);
-
-// Selected filters with computed getters/setters
-const selectedStatus = computed({
-  get: () => {
-    const currentStatus = storeStatusFilter.value || 'all';
-    return statuses.value.find(status => status.value === currentStatus) || statuses.value[0];
-  },
-  set: (status: Status) => {
-    // When "all" is selected, use a special value like "all" instead of empty string
-    storeStatusFilter.value = status.value;
-    blogStore.fetchBlogs();
-  }
-});
-
 // Category filter
 const categories = computed(() => {
   const allCategories = { id: 0, name: 'Semua Kategori' };
   return [allCategories, ...storeCategories.value];
+});
+
+// Selected filters with computed getters/setters
+const selectedStatus = computed({
+  get: () => {
+    const currentStatus = storeStatusFilter.value;
+    return statuses.value.find(status => status.value === currentStatus) || statuses.value[0];
+  },
+  set: (status: Status) => {
+    storeStatusFilter.value = status.value;
+    blogStore.fetchBlogs();
+  }
 });
 
 const selectedCategory = computed({
@@ -557,7 +547,7 @@ const pageNumbers = computed(() => {
   return pages;
 });
 
-// TypeScript helper untuk status
+// TypeScript helper for status
 const isValidStatus = (status: string): status is keyof typeof statusClasses => {
   return Object.keys(statusClasses).includes(status);
 };
@@ -584,8 +574,19 @@ onMounted(async () => {
   // Sync local state with store
   searchQuery.value = storeSearchQuery.value;
   
+  // IMPORTANT: Clear filters to show all blogs
+  storeStatusFilter.value = null;
+  storeCategoryFilter.value = null;
+  storeSearchQuery.value = '';
+  
   // Fetch data
-  await fetchBlogs();
+  await Promise.all([
+    blogStore.fetchCategories(),
+    blogStore.fetchBlogs()
+  ]);
+  
+  // Fetch statistics
+  await fetchBlogStats();
 });
 
 // Watch for changes in store query to sync with local state
