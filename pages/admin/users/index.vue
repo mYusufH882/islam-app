@@ -2,14 +2,14 @@
     <div>
       <div class="mb-6 flex justify-between items-center">
         <div>
-          <h1 class="text-2xl font-semibold text-gray-900">Manajemen Pengguna</h1>
-          <p class="mt-1 text-sm text-gray-600">
+          <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Manajemen Pengguna</h1>
+          <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
             Kelola pengguna aplikasi Pemuda Persis Cimsel
           </p>
         </div>
         <button
           @click="openAddUserModal"
-          class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-blue-700 dark:hover:bg-blue-800 dark:focus:ring-offset-dark-bg-primary"
         >
           <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
@@ -19,20 +19,20 @@
       </div>
 
       <!-- Filter dan Pencarian -->
-      <div class="mb-6 bg-white p-4 shadow sm:rounded-md">
+      <div class="mb-6 bg-white dark:bg-dark-bg-secondary p-4 shadow dark:shadow-gray-800 sm:rounded-md">
         <div class="flex items-center space-x-4">
           <div class="flex-1">
             <label for="search" class="sr-only">Cari pengguna</label>
             <div class="relative rounded-md shadow-sm">
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <svg class="h-5 w-5 text-gray-400 dark:text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
                 </svg>
               </div>
               <input
                 id="search"
                 v-model="searchQuery"
-                class="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md"
+                class="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 dark:border-gray-700 dark:bg-dark-bg-primary dark:text-white rounded-md"
                 placeholder="Cari nama, email, atau username"
                 type="search"
                 @input="onSearchInput"
@@ -42,10 +42,10 @@
           <Listbox v-model="selectedStatus" as="div" class="w-56">
             <!-- <ListboxLabel class="block text-sm font-medium text-gray-700">Status</ListboxLabel> -->
             <div class="mt-1 relative">
-              <ListboxButton class="bg-white relative w-full border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+              <ListboxButton class="bg-white dark:bg-dark-bg-primary relative w-full border border-gray-300 dark:border-gray-700 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:text-white">
                 <span class="block truncate">{{ selectedStatus.name }}</span>
                 <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                  <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <svg class="h-5 w-5 text-gray-400 dark:text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
                   </svg>
                 </span>
@@ -56,7 +56,7 @@
                 leave-from-class="opacity-100"
                 leave-to-class="opacity-0"
               >
-                <ListboxOptions class="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
+                <ListboxOptions class="absolute z-10 mt-1 w-full bg-white dark:bg-dark-bg-secondary shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
                   <ListboxOption
                     v-for="status in statuses"
                     :key="status.id"
@@ -64,7 +64,7 @@
                     v-slot="{ active, selected }"
                   >
                     <div :class="[
-                      active ? 'text-white bg-blue-600' : 'text-gray-900',
+                      active ? 'text-white bg-blue-600 dark:bg-blue-800' : 'text-gray-900 dark:text-white',
                       'cursor-default select-none relative py-2 pl-3 pr-9'
                     ]">
                       <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">
@@ -74,7 +74,7 @@
                       <span
                         v-if="selected"
                         :class="[
-                          active ? 'text-white' : 'text-blue-600',
+                          active ? 'text-white' : 'text-blue-600 dark:text-blue-400',
                           'absolute inset-y-0 right-0 flex items-center pr-4'
                         ]"
                       >
@@ -93,24 +93,24 @@
 
       <!-- State Loading -->
       <div v-if="loading" class="text-center py-12">
-        <div class="inline-block animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>
-        <p class="mt-2 text-gray-500">Memuat data pengguna...</p>
+        <div class="inline-block animate-spin h-8 w-8 border-4 border-blue-500 dark:border-blue-400 border-t-transparent rounded-full"></div>
+        <p class="mt-2 text-gray-500 dark:text-gray-400">Memuat data pengguna...</p>
       </div>
 
       <!-- State Error -->
-      <div v-else-if="error" class="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
+      <div v-else-if="error" class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 dark:border-red-700 p-4 mb-6">
         <div class="flex">
           <div class="flex-shrink-0">
-            <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <svg class="h-5 w-5 text-red-400 dark:text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
             </svg>
           </div>
           <div class="ml-3">
-            <p class="text-sm text-red-700">{{ error }}</p>
+            <p class="text-sm text-red-700 dark:text-red-400">{{ error }}</p>
             <div class="mt-2">
               <button 
                 @click="fetchUsers" 
-                class="text-sm text-red-700 font-medium underline hover:text-red-600"
+                class="text-sm text-red-700 dark:text-red-400 font-medium underline hover:text-red-600 dark:hover:text-red-300"
               >
                 Coba lagi
               </button>
@@ -123,20 +123,20 @@
       <div v-else class="flex flex-col">
         <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
           <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
-            <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
-              <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+            <div class="shadow overflow-hidden border-b border-gray-200 dark:border-gray-700 sm:rounded-lg">
+              <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead class="bg-gray-50 dark:bg-dark-bg-primary">
                   <tr>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Pengguna
                     </th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Username
                     </th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Status
                     </th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Bergabung Pada
                     </th>
                     <th scope="col" class="relative px-6 py-3">
@@ -144,49 +144,50 @@
                     </th>
                   </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                  <tr v-for="user in users" :key="user.id">
+                <tbody class="bg-white dark:bg-dark-bg-secondary divide-y divide-gray-200 dark:divide-gray-700">
+                  <tr v-for="user in users" :key="user.id" class="hover:bg-gray-50 dark:hover:bg-dark-bg-primary">
                     <td class="px-6 py-4 whitespace-nowrap">
                       <div class="flex items-center">
                         <div class="flex-shrink-0 h-10 w-10">
-                          <div class="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-medium">
+                          <div class="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white">
                             {{ getUserInitials(user.name) }}
                           </div>
                         </div>
                         <div class="ml-4">
-                          <div class="text-sm font-medium text-gray-900">
+                          <div class="text-sm font-medium text-gray-900 dark:text-white">
                             {{ user.name }}
                           </div>
-                          <div class="text-sm text-gray-500">
+                          <div class="text-sm text-gray-500 dark:text-gray-400">
                             {{ user.email }}
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       {{ user.username }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                      <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="getStatusClass(user.status)">
+                      <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" 
+                            :class="getStatusClass(user.status)">
                         {{ user.status }}
                       </span>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       {{ formatDate(user.createdAt) }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div class="flex space-x-2 justify-end">
-                        <button @click="openEditUserModal(user)" class="text-blue-600 hover:text-blue-900">
+                        <button @click="openEditUserModal(user)" class="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300">
                           Edit
                         </button>
-                        <button @click="openDeleteModal(user)" class="text-red-600 hover:text-red-900">
+                        <button @click="openDeleteModal(user)" class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">
                           Hapus
                         </button>
                       </div>
                     </td>
                   </tr>
                   <tr v-if="users.length === 0">
-                    <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
+                    <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
                       Tidak ada pengguna yang ditemukan
                     </td>
                   </tr>
@@ -200,7 +201,7 @@
       <!-- Pagination -->
       <div v-if="users.length > 0" class="mt-4 flex items-center justify-between">
         <div class="flex items-center">
-          <span class="text-sm text-gray-700">
+          <span class="text-sm text-gray-700 dark:text-gray-300">
             Menampilkan <span class="font-medium">{{ (pagination.page - 1) * pagination.limit + 1 }}</span> hingga 
             <span class="font-medium">{{ Math.min(pagination.page * pagination.limit, pagination.total) }}</span> dari 
             <span class="font-medium">{{ pagination.total }}</span> pengguna
@@ -209,17 +210,17 @@
         <div class="flex space-x-2">
           <button 
             @click="prevPage" 
-            class="px-3 py-1 border rounded-md text-sm text-gray-700"
+            class="px-3 py-1 border rounded-md text-sm text-gray-700 dark:text-gray-300 dark:border-gray-700"
             :disabled="pagination.page === 1"
-            :class="[pagination.page === 1 ? 'opacity-50 cursor-not-allowed' : '']"
+            :class="[pagination.page === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-dark-bg-primary']"
           >
             Sebelumnya
           </button>
           <button 
             @click="nextPage" 
-            class="px-3 py-1 border rounded-md text-sm text-gray-700"
+            class="px-3 py-1 border rounded-md text-sm text-gray-700 dark:text-gray-300 dark:border-gray-700"
             :disabled="pagination.page === pagination.totalPages"
-            :class="[pagination.page === pagination.totalPages ? 'opacity-50 cursor-not-allowed' : '']"
+            :class="[pagination.page === pagination.totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-dark-bg-primary']"
           >
             Berikutnya
           </button>
@@ -228,12 +229,12 @@
   
       <!-- Modal tambah/edit pengguna -->
       <Dialog :open="isUserModalOpen" @close="closeUserModal" class="relative z-50">
-        <div class="fixed inset-0 bg-black/30" aria-hidden="true" />
+        <div class="fixed inset-0 bg-black/30 dark:bg-black/50" aria-hidden="true" />
 
         <div class="fixed inset-0 overflow-y-auto">
           <div class="flex min-h-full items-center justify-center p-4">
-            <DialogPanel class="mx-auto max-w-xl w-full rounded-lg bg-white p-6 shadow-xl">
-              <DialogTitle class="text-lg font-medium leading-6 text-gray-900">
+            <DialogPanel class="mx-auto max-w-xl w-full rounded-lg bg-white dark:bg-dark-bg-secondary p-6 shadow-xl">
+              <DialogTitle class="text-lg font-medium leading-6 text-gray-900 dark:text-white">
                 {{ editMode ? 'Edit Pengguna' : 'Tambah Pengguna Baru' }}
               </DialogTitle>
               
@@ -241,77 +242,77 @@
                 <form @submit.prevent="saveUser">
                   <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                     <div class="sm:col-span-3">
-                      <label for="name" class="block text-sm font-medium text-gray-700">Nama Lengkap</label>
+                      <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nama Lengkap</label>
                       <div class="mt-1">
                         <input 
                           type="text" 
                           id="name" 
                           v-model="userForm.name" 
-                          class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md" 
+                          class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 dark:bg-dark-bg-primary dark:text-white rounded-md" 
                           required 
                         />
                       </div>
                     </div>
 
                     <div class="sm:col-span-3">
-                      <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
+                      <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
                       <div class="mt-1">
                         <input 
                           type="text" 
                           id="username" 
                           v-model="userForm.username" 
-                          class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md" 
+                          class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 dark:bg-dark-bg-primary dark:text-white rounded-md" 
                           required 
                         />
                       </div>
                     </div>
 
                     <div class="sm:col-span-6">
-                      <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                      <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
                       <div class="mt-1">
                         <input 
                           type="email" 
                           id="email" 
                           v-model="userForm.email" 
-                          class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md" 
+                          class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 dark:bg-dark-bg-primary dark:text-white rounded-md" 
                           required 
                         />
                       </div>
                     </div>
 
                     <div class="sm:col-span-3" v-if="!editMode">
-                      <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                      <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
                       <div class="mt-1">
                         <input 
                           type="password" 
                           id="password" 
                           v-model="userForm.password" 
-                          class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md" 
+                          class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 dark:bg-dark-bg-primary dark:text-white rounded-md" 
                           :required="!editMode" 
                         />
                       </div>
                     </div>
 
                     <div class="sm:col-span-3" v-if="!editMode">
-                      <label for="confirmPassword" class="block text-sm font-medium text-gray-700">Konfirmasi Password</label>
+                      <label for="confirmPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Konfirmasi Password</label>
                       <div class="mt-1">
                         <input 
                           type="password" 
                           id="confirmPassword" 
                           v-model="userForm.confirmPassword" 
-                          class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md" 
+                          class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 dark:bg-dark-bg-primary dark:text-white rounded-md" 
                           :required="!editMode" 
                         />
                       </div>
                     </div>
 
                     <div class="sm:col-span-3">
-                      <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+                      <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
                       <div class="mt-1">
                         <select 
                           id="status" 
                           v-model="userForm.status" 
-                          class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                          class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 dark:bg-dark-bg-primary dark:text-white rounded-md"
                         >
                           <option value="active">Aktif</option>
                           <option value="inactive">Nonaktif</option>
@@ -323,14 +324,14 @@
                   <div class="mt-6 flex justify-end space-x-3">
                     <button
                       type="button"
-                      class="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                      class="inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-dark-bg-primary px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-dark-bg-primary focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-dark-bg-secondary"
                       @click="closeUserModal"
                     >
                       Batal
                     </button>
                     <button
                       type="submit"
-                      class="inline-flex justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                      class="inline-flex justify-center rounded-md border border-transparent bg-blue-600 dark:bg-blue-700 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-dark-bg-secondary"
                     >
                       {{ editMode ? 'Simpan Perubahan' : 'Tambah Pengguna' }}
                     </button>
@@ -344,16 +345,16 @@
   
       <!-- Modal konfirmasi hapus -->
       <Dialog :open="isDeleteModalOpen" @close="closeDeleteModal" class="relative z-50">
-        <div class="fixed inset-0 bg-black/30" aria-hidden="true" />
+        <div class="fixed inset-0 bg-black/30 dark:bg-black/50" aria-hidden="true" />
 
         <div class="fixed inset-0 overflow-y-auto">
           <div class="flex min-h-full items-center justify-center p-4">
-            <DialogPanel class="mx-auto max-w-md rounded-lg bg-white p-6 shadow-xl">
-              <DialogTitle class="text-lg font-medium leading-6 text-gray-900">
+            <DialogPanel class="mx-auto max-w-md rounded-lg bg-white dark:bg-dark-bg-secondary p-6 shadow-xl">
+              <DialogTitle class="text-lg font-medium leading-6 text-gray-900 dark:text-white">
                 Hapus Pengguna
               </DialogTitle>
               <div class="mt-2">
-                <p class="text-sm text-gray-500">
+                <p class="text-sm text-gray-500 dark:text-gray-400">
                   Apakah Anda yakin ingin menghapus pengguna "{{ selectedUser?.name }}"? Tindakan ini tidak dapat dibatalkan.
                 </p>
               </div>
@@ -361,14 +362,14 @@
               <div class="mt-4 flex space-x-2 justify-end">
                 <button
                   type="button"
-                  class="inline-flex justify-center rounded-md border border-transparent bg-gray-100 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
+                  class="inline-flex justify-center rounded-md border border-transparent bg-gray-100 dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2 dark:focus:ring-offset-dark-bg-secondary"
                   @click="closeDeleteModal"
                 >
                   Batal
                 </button>
                 <button
                   type="button"
-                  class="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
+                  class="inline-flex justify-center rounded-md border border-transparent bg-red-600 dark:bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 dark:hover:bg-red-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:focus:ring-offset-dark-bg-secondary"
                   @click="deleteUser"
                 >
                   Hapus
@@ -487,8 +488,8 @@ const formatDate = (dateString?: string): string => {
 // Get status class
 const getStatusClass = (status: string): string => {
   return status === 'active' 
-    ? 'bg-green-100 text-green-800' 
-    : 'bg-red-100 text-red-800';
+    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+    : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
 };
 
 // Debounce search
