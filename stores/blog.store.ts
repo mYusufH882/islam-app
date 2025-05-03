@@ -132,65 +132,72 @@ export const useBlogStore = defineStore('blog', {
             }
         },
 
-        async createBlog(blogData: Omit<Blog, 'id'>) {
+        async createBlog(blogData: FormData) {
             this.loading = true;
             this.error = null;
             
             try {
-                const { apiFetch } = useApi();
-                
-                const { data, error } = await apiFetch<Blog>('/blogs', {
-                    method: 'POST',
-                    body: blogData
-                });
-                
-                if (error.value) {
-                    throw new Error(error.value.message || 'Gagal membuat blog baru');
+              const { apiFetch } = useApi();
+              
+              const { data, error } = await apiFetch<Blog>('/blogs', {
+                method: 'POST',
+                // Tidak perlu menambahkan Content-Type, browser akan otomatis menambahkan
+                // dengan boundary yang diperlukan untuk multipart/form-data
+                body: blogData,
+                // Pastikan tidak ada transformasi JSON
+                headers: {
+                  'Accept': 'application/json'
                 }
-                
-                if (data.value && data.value.success) {
-                    await this.fetchBlogs();
-                    return true;
-                }
-                
-                return false;
-            } catch (err: any) {
-                this.error = err.message || 'Terjadi kesalahan saat membuat blog baru';
-                console.error('Create blog error:', err);
-                return false;
+              });
+              
+              if (error.value) {
+                throw new Error(error.value.message || 'Gagal membuat blog baru');
+              }
+              
+              if (data.value && data.value.success) {
+                await this.fetchBlogs();
+                return true;
+              }
+              
+              return false;
+            } catch (err) {
+              console.error('Create blog error:', err);
+              return false;
             } finally {
-                this.loading = false;
+              this.loading = false;
             }
         },
-  
-        async updateBlog(id: number, blogData: Partial<Blog>) {
+          
+        async updateBlog(id: number, blogData: FormData) {
             this.loading = true;
             this.error = null;
             
             try {
-                const { apiFetch } = useApi();
-                
-                const { data, error } = await apiFetch<Blog>(`/blogs/${id}`, {
-                    method: 'PUT',
-                    body: blogData
-                });
-                
-                if (error.value) {
-                    throw new Error(error.value.message || 'Gagal mengupdate blog');
+              const { apiFetch } = useApi();
+              
+              const { data, error } = await apiFetch<Blog>(`/blogs/${id}`, {
+                method: 'PUT',
+                body: blogData,
+                headers: {
+                  'Accept': 'application/json'
                 }
-                
-                if (data.value && data.value.success) {
-                    await this.fetchBlogs();
-                    return true;
-                }
-                
-                return false;
-            } catch (err: any) {
-                this.error = err.message || 'Terjadi kesalahan saat mengupdate blog';
-                console.error('Update blog error:', err);
-                return false;
+              });
+              
+              if (error.value) {
+                throw new Error(error.value.message || 'Gagal mengupdate blog');
+              }
+              
+              if (data.value && data.value.success) {
+                await this.fetchBlogs();
+                return true;
+              }
+              
+              return false;
+            } catch (err) {
+              console.error('Update blog error:', err);
+              return false;
             } finally {
-                this.loading = false;
+              this.loading = false;
             }
         },
         

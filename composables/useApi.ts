@@ -1,3 +1,5 @@
+// composables/useApi.ts - Verifikasi dan update jika perlu untuk menangani FormData
+
 import { useAuthStore } from "~/stores/auth";
 import type { ApiResponse } from "~/utils/api";
 
@@ -16,6 +18,16 @@ export const useApi = () => {
     
     if (authStore.token) {
       headers.Authorization = `Bearer ${authStore.token}`;
+    }
+    
+    // Jangan tambahkan Content-Type jika kita mengirim FormData
+    // Browser akan otomatis menambahkan dengan boundary yang tepat
+    if (options.body instanceof FormData) {
+      // Hapus Content-Type jika ada, biarkan browser yang mengaturnya
+      delete headers['Content-Type'];
+    } else if (!headers['Content-Type'] && !(options.body instanceof FormData)) {
+      // Untuk non-FormData, tambahkan default Content-Type
+      headers['Content-Type'] = 'application/json';
     }
     
     // Merge default options with provided options

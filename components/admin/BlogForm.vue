@@ -346,7 +346,8 @@
 import { ref, reactive, computed, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/vue';
-import { useBlogStore, type Blog, type Category } from '~/stores/blog.store';
+import { useBlogStore } from '~/stores/blog.store';
+import type { Blog, Category } from '~/types/blog';
 import DOMPurify from 'dompurify';
 import { marked } from 'marked';
 
@@ -497,9 +498,14 @@ function handleFileChange(event: Event) {
   error.value = '';
 }
 
+// Tambahkan di bagian state BlogForm.vue
+const imageWasRemoved = ref(false);
+
+// Update function removeImage
 function removeImage() {
   formData.image = null;
   imagePreview.value = null;
+  imageWasRemoved.value = true;
   if (fileInput.value) {
     fileInput.value.value = '';
   }
@@ -670,31 +676,33 @@ async function saveBlog() {
     // Extract excerpt from content (first 150 chars)
     const excerpt = formData.content.replace(/<[^>]*>?/gm, '').substring(0, 150);
     
-    // Prepare data object
-    const blogData: Partial<Blog> = {
-      title: formData.title,
-      content: formData.content,
-      excerpt,
-      categoryId: formData.categoryId,
-      status: formData.status
-    };
+    // Gunakan FormData untuk upload file
+    const form = new FormData();
+    form.append('title', formData.title);
+    form.append('content', formData.content);
+    form.append('excerpt', excerpt);
+    form.append('categoryId', formData.categoryId.toString());
+    form.append('status', formData.status);
     
-    // TODO: Handle image upload in a real implementation
-    if (formData.image && imagePreview.value) {
-      // In a real app, you'd upload the image to a server and get a URL back
-      // For demo purposes, we'll use the existing preview
-      blogData.image = imagePreview.value;
+    // Tambahkan file gambar jika ada
+    if (formData.image) {
+      form.append('image', formData.image);
     }
     
-    let success: boolean;
+    // Tambahkan flag untuk menghapus gambar jika diperlukan
+    if (props.isEdit && imagePreview.value === null && imageWasRemoved.value) {
+      form.append('removeImage', 'true');
+    }
+    
+    let success = false;
     
     if (props.isEdit) {
       // Update existing blog
       const blogId = Number(route.params.id);
-      success = await blogStore.updateBlog(blogId, blogData);
+      success = await blogStore.updateBlog(blogId, form);
     } else {
       // Create new blog
-      success = await blogStore.createBlog(blogData as Blog); 
+      success = await blogStore.createBlog(form);
     }
     
     if (success) {
@@ -702,8 +710,8 @@ async function saveBlog() {
     } else {
       error.value = 'Gagal menyimpan artikel. Silakan coba lagi.';
     }
-  } catch (err: any) {
-    error.value = err.message || 'Terjadi kesalahan saat menyimpan artikel';
+  } catch (err) {
+    console.error('Update blog error:', err);
   } finally {
     saving.value = false;
   }
