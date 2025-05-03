@@ -1,8 +1,11 @@
+// nuxt.config.ts
 export default defineNuxtConfig({
+  // Konfigurasi rendering
   ssr: true,
+
   routeRules: {
-      '/': { ssr: false },
-      '/auth/**': { ssr: false },
+    '/': { ssr: true },
+    '/auth/**': { ssr: false }, // Matikan SSR untuk semua halaman auth
   },
 
   modules: [
@@ -21,10 +24,16 @@ export default defineNuxtConfig({
     transpile: ['@headlessui/vue']
   },
 
+  css: [
+    '~/assets/css/hydration-fix.css'
+  ],
+
   plugins: [
     '~/plugins/headlessui.ts',
     '~/plugins/auth.ts',
     '~/plugins/dark-mode.client.ts',
+    '~/plugins/fixHydration.client.js',
+    '~/plugins/completeHydration.client.js'
   ],
 
   app: {
@@ -34,12 +43,35 @@ export default defineNuxtConfig({
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' }
       ]
-    }
+    },
+    // Atur mode transisi halaman untuk membantu dengan hydration
+    pageTransition: false,
+    layoutTransition: false
   },
 
   typescript: {
     strict: true
   },
 
-  compatibilityDate: '2025-04-26'
+  // Setelan eksperimental untuk membantu mengatasi masalah hydration
+  vite: {
+    vue: {
+      template: {
+        compilerOptions: {
+          // Opsi ini membuat Vue lebih toleran terhadap kesalahan hydration
+          whitespace: 'preserve'
+        }
+      }
+    }
+  },
+
+  // Nonaktifkan optimasi pencetak hidrogen yang mungkin menyebabkan masalah
+  nitro: {
+    preset: 'node-server',
+    routeRules: {
+      '/**': { swr: false }
+    }
+  },
+
+  compatibilityDate: '2025-05-03'
 })

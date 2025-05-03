@@ -1,82 +1,82 @@
 <template>
     <div>
       <div class="mb-6">
-        <h1 class="text-2xl font-semibold text-gray-900">Profil Admin</h1>
-        <p class="mt-1 text-sm text-gray-600">
+        <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Profile</h1>
+        <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
           Kelola informasi profil Anda
         </p>
       </div>
   
       <!-- Loading State -->
       <div v-if="loading" class="flex justify-center py-10">
-        <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
+        <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500 dark:border-blue-400"></div>
       </div>
       
       <!-- Error State -->
-      <div v-else-if="error" class="bg-red-50 p-4 rounded-lg mb-6">
-        <p class="text-red-600">{{ error }}</p>
-        <button @click="fetchProfile" class="mt-2 text-blue-600">Coba lagi</button>
+      <div v-else-if="error" class="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg mb-6">
+        <p class="text-red-600 dark:text-red-400">{{ error }}</p>
+        <button @click="fetchProfile" class="mt-2 text-blue-600 dark:text-blue-400">Coba lagi</button>
       </div>
   
       <!-- Profil Card -->
-      <div v-else class="bg-white shadow overflow-hidden sm:rounded-lg">
+      <div v-else class="bg-white dark:bg-dark-bg-secondary shadow dark:shadow-gray-800 overflow-hidden sm:rounded-lg">
         <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
           <div>
-            <h3 class="text-lg leading-6 font-medium text-gray-900">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">
               Informasi Profil
             </h3>
-            <p class="mt-1 max-w-2xl text-sm text-gray-500">
+            <p class="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">
               Detail personal dan informasi akun
             </p>
           </div>
           <button 
             @click="isEditing = !isEditing" 
-            class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            class="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-700 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-bg-primary hover:bg-gray-50 dark:hover:bg-dark-bg-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-dark-bg-secondary"
           >
             {{ isEditing ? 'Batal' : 'Edit Profil' }}
           </button>
         </div>
         
         <!-- View Mode -->
-        <div v-if="!isEditing" class="border-t border-gray-200">
+        <div v-if="!isEditing" class="border-t border-gray-200 dark:border-gray-700">
           <dl>
-            <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-              <dt class="text-sm font-medium text-gray-500">
+            <div class="bg-gray-50 dark:bg-dark-bg-primary px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+              <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
                 Nama Lengkap
               </dt>
-              <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+              <dd class="mt-1 text-sm text-gray-900 dark:text-white sm:mt-0 sm:col-span-2">
                 {{ user.name }}
               </dd>
             </div>
-            <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-              <dt class="text-sm font-medium text-gray-500">
+            <div class="bg-white dark:bg-dark-bg-secondary px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+              <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
                 Username
               </dt>
-              <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+              <dd class="mt-1 text-sm text-gray-900 dark:text-white sm:mt-0 sm:col-span-2">
                 {{ user.username }}
               </dd>
             </div>
-            <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-              <dt class="text-sm font-medium text-gray-500">
+            <div class="bg-gray-50 dark:bg-dark-bg-primary px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+              <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
                 Email
               </dt>
-              <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+              <dd class="mt-1 text-sm text-gray-900 dark:text-white sm:mt-0 sm:col-span-2">
                 {{ user.email }}
               </dd>
             </div>
-            <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-              <dt class="text-sm font-medium text-gray-500">
+            <div class="bg-white dark:bg-dark-bg-secondary px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+              <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
                 Peran
               </dt>
-              <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+              <dd class="mt-1 text-sm text-gray-900 dark:text-white sm:mt-0 sm:col-span-2">
                 {{ formatRole(user.role) }}
               </dd>
             </div>
-            <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-              <dt class="text-sm font-medium text-gray-500">
+            <div class="bg-gray-50 dark:bg-dark-bg-primary px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+              <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
                 Login Terakhir
               </dt>
-              <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+              <dd class="mt-1 text-sm text-gray-900 dark:text-white sm:mt-0 sm:col-span-2">
                 {{ formatDate(user.lastLogin) }}
               </dd>
             </div>
@@ -84,18 +84,18 @@
         </div>
         
         <!-- Edit Mode -->
-        <div v-else class="border-t border-gray-200 p-4">
+        <div v-else class="border-t border-gray-200 dark:border-gray-700 p-4">
           <form @submit.prevent="updateProfile">
             <div class="space-y-4">
               <!-- Nama -->
               <div>
-                <label for="name" class="block text-sm font-medium text-gray-700">Nama Lengkap</label>
+                <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nama Lengkap</label>
                 <div class="mt-1">
                   <input
                     id="name"
                     type="text"
                     v-model="formData.name"
-                    class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                    class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 dark:bg-dark-bg-primary dark:text-white rounded-md"
                     required
                   />
                 </div>
@@ -103,13 +103,13 @@
               
               <!-- Username -->
               <div>
-                <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
+                <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
                 <div class="mt-1">
                   <input
                     id="username"
                     type="text"
                     v-model="formData.username"
-                    class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                    class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 dark:bg-dark-bg-primary dark:text-white rounded-md"
                     required
                   />
                 </div>
@@ -117,13 +117,13 @@
               
               <!-- Email -->
               <div>
-                <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
                 <div class="mt-1">
                   <input
                     id="email"
                     type="email"
                     v-model="formData.email"
-                    class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                    class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 dark:bg-dark-bg-primary dark:text-white rounded-md"
                     required
                   />
                 </div>
@@ -134,13 +134,13 @@
                 <button
                   type="button"
                   @click="isEditing = false"
-                  class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  class="inline-flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-700 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-bg-primary hover:bg-gray-50 dark:hover:bg-dark-bg-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-dark-bg-secondary"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-dark-bg-secondary"
                   :disabled="saving"
                 >
                   <svg v-if="saving" class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -163,7 +163,7 @@
   import { ref, reactive, onMounted } from 'vue';
   import { useAuthStore } from '~/stores/auth';
   import { useApi } from '~/composables/useApi';
-import ChangePasswordForm from '~/components/admin/ChangePasswordForm.vue';
+  import ChangePasswordForm from '~/components/admin/ChangePasswordForm.vue';
   
   // Define page meta
   definePageMeta({

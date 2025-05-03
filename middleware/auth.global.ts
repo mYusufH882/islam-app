@@ -1,35 +1,35 @@
+// middleware/auth.global.ts
 export default defineNuxtRouteMiddleware(async (to, from) => {
-  // Pastikan hanya dijalankan di sisi klien
-  if (process.server) return;
-
-  const authStore = useAuthStore();
+    // Skip middleware on server-side or for auth related pages
+    if (process.server || to.path.startsWith('/auth/')) return;
   
-  // Tunggu inisialisasi auth store
-  await authStore.init();
-
-  // Rute yang memerlukan penanganan khusus
-  const adminRoutes = ['/admin', '/admin/users', '/admin/blog'];
-  const isAdminRoute = adminRoutes.some(route => to.path.startsWith(route));
-
-  // Logika navigasi berbasis peran
-  if (isAdminRoute) {
-      // Jika mencoba mengakses rute admin
+    const authStore = useAuthStore();
+    
+    // Wait for auth store initialization
+    await authStore.init();
+  
+    // Define routes that require special handling
+    const adminRoutes = ['/admin', '/admin/users', '/admin/blog'];
+    const isAdminRoute = adminRoutes.some(route => to.path.startsWith(route));
+  
+    // Navigation logic based on roles
+    if (isAdminRoute) {
+      // If trying to access admin routes
       if (!authStore.isAuthenticated) {
-          return navigateTo('/auth/login');
+        return navigateTo('/auth/login');
       }
-
-      // Pastikan hanya admin yang bisa mengakses
+  
+      // Ensure only admins can access
       if (authStore.user?.role !== 'admin') {
-          return navigateTo('/auth/login');
+        return navigateTo('/auth/login');
       }
-
-      // Jika sudah admin, pastikan tetap di rute admin
+  
+      // If already admin, ensure staying on admin route
       return;
-  }
-
-  // Rute utama (/) untuk admin seharusnya redirect ke admin
-  if (to.path === '/' && authStore.user?.role === 'admin') {
-      console.log('Redirecting admin to admin dashboard');
+    }
+  
+    // Main route (/) for admin should redirect to admin dashboard
+    if (to.path === '/' && authStore.user?.role === 'admin') {
       return navigateTo('/admin');
-  }
+    }
 });

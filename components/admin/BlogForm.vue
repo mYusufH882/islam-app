@@ -1,25 +1,26 @@
 <template>
-    <div class="bg-white shadow rounded-lg">
-      <div class="px-6 py-4 border-b border-gray-200">
-        <h3 class="text-lg font-medium leading-6 text-gray-900">
-          {{ isEdit ? 'Edit Artikel' : 'Artikel Baru' }}
-        </h3>
-        <p class="mt-1 text-sm text-gray-500">
-          {{ isEdit ? 'Perbarui konten artikel' : 'Buat artikel blog baru' }}
-        </p>
-      </div>
-      
-      <form @submit.prevent="saveBlog" class="p-6">
-        <!-- Error alerts -->
-        <div v-if="error" class="mb-6 bg-red-50 border-l-4 border-red-400 p-4">
+  <div class="bg-white dark:bg-dark-bg-secondary shadow dark:shadow-gray-800 overflow-hidden sm:rounded-lg">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+      <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">
+        {{ isEdit ? 'Edit Artikel' : 'Artikel Baru' }}
+      </h3>
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        {{ isEdit ? 'Perbarui konten artikel' : 'Buat artikel blog baru' }}
+      </p>
+    </div>
+    
+    <div class="p-6">
+      <form @submit.prevent="saveBlog">
+        <!-- Alert for errors -->
+        <div v-if="error" class="mb-6 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 dark:border-red-700 p-4">
           <div class="flex">
             <div class="flex-shrink-0">
-              <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              <svg class="h-5 w-5 text-red-400 dark:text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
               </svg>
             </div>
             <div class="ml-3">
-              <p class="text-sm text-red-700">{{ error }}</p>
+              <p class="text-sm text-red-700 dark:text-red-400">{{ error }}</p>
             </div>
           </div>
         </div>
@@ -27,27 +28,27 @@
         <div class="space-y-6">
           <!-- Title input -->
           <div>
-            <label for="title" class="block text-sm font-medium text-gray-700">Judul</label>
+            <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Judul</label>
             <div class="mt-1">
               <input 
                 id="title" 
                 v-model="formData.title" 
                 type="text" 
                 required
-                class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 dark:bg-dark-bg-primary dark:text-white rounded-md"
                 placeholder="Masukkan judul artikel"
               />
             </div>
-            <p v-if="titleError" class="mt-1 text-sm text-red-600">{{ titleError }}</p>
+            <p v-if="titleError" class="mt-1 text-xs sm:text-sm text-red-600 dark:text-red-400">{{ titleError }}</p>
           </div>
           
           <!-- Category selection -->
           <div>
-            <label for="category" class="block text-sm font-medium text-gray-700">Kategori</label>
+            <label for="category" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Kategori</label>
             <div class="mt-1">
               <!-- Show loading indicator while categories are loading -->
-              <div v-if="categoriesLoading" class="flex items-center text-sm text-gray-500">
-                <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <div v-if="categoriesLoading" class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
@@ -59,7 +60,7 @@
                 id="category" 
                 v-model="formData.categoryId" 
                 required
-                class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 dark:bg-dark-bg-primary dark:text-white rounded-md"
               >
                 <option disabled value="0">Pilih kategori</option>
                 <option v-for="category in categories" :key="category.id" :value="category.id">
@@ -68,16 +69,16 @@
               </select>
               
               <!-- Debug information -->
-              <div class="mt-1 text-xs text-gray-500">
+              <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 Total kategori tersedia: {{ categories.length }}
               </div>
             </div>
             <div class="mt-2 flex justify-between">
-              <span class="text-sm text-gray-500">Tidak menemukan kategori yang sesuai?</span>
+              <span class="text-sm text-gray-500 dark:text-gray-400">Tidak menemukan kategori yang sesuai?</span>
               <button 
                 type="button" 
                 @click="showCategoryForm = true"
-                class="text-sm text-blue-600 hover:text-blue-500"
+                class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
               >
                 Tambah Kategori Baru
               </button>
@@ -86,29 +87,29 @@
           
           <!-- Featured image upload -->
           <div>
-            <label class="block text-sm font-medium text-gray-700">Gambar Thumbnail</label>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Gambar Thumbnail</label>
             <div class="mt-1 flex items-center">
-              <div v-if="imagePreview" class="relative flex-shrink-0 h-24 w-24 overflow-hidden rounded-md bg-gray-100">
+              <div v-if="imagePreview" class="relative flex-shrink-0 h-24 w-24 overflow-hidden rounded-md bg-gray-100 dark:bg-gray-800">
                 <img :src="imagePreview" class="h-full w-full object-cover" />
                 <button 
                   type="button"
                   @click="removeImage"
-                  class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600"
+                  class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 dark:hover:bg-red-700"
                 >
                   <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
-              <div v-else class="flex-shrink-0 h-24 w-24 rounded-md border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
-                <svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div v-else class="flex-shrink-0 h-24 w-24 rounded-md border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center bg-gray-50 dark:bg-dark-bg-primary">
+                <svg class="h-8 w-8 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
               <button
                 type="button"
                 @click="triggerFilePicker"
-                class="ml-4 inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                class="ml-4 inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-700 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-bg-primary hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-dark-bg-secondary"
               >
                 {{ imagePreview ? 'Ubah Gambar' : 'Unggah Gambar' }}
               </button>
@@ -120,19 +121,19 @@
                 @change="handleFileChange"
               />
             </div>
-            <p class="mt-2 text-sm text-gray-500">JPG, PNG, atau GIF. Ukuran maksimal 2MB.</p>
+            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">JPG, PNG, atau GIF. Ukuran maksimal 2MB.</p>
           </div>
           
           <!-- Content editor -->
           <div>
-            <label for="content" class="block text-sm font-medium text-gray-700">Konten</label>
+            <label for="content" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Konten</label>
             <div class="mt-1">
               <!-- Rich Text Editor Toolbar -->
-              <div class="border border-b-0 border-gray-300 rounded-t-md bg-gray-50 p-2 flex flex-wrap gap-1">
+              <div class="border border-b-0 border-gray-300 dark:border-gray-700 rounded-t-md bg-gray-50 dark:bg-dark-bg-primary p-2 flex flex-wrap gap-1">
                 <button 
                   type="button" 
                   @click="formatText('bold')"
-                  class="p-1 rounded hover:bg-gray-200" 
+                  class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300" 
                   title="Bold"
                 >
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -142,7 +143,7 @@
                 <button 
                   type="button" 
                   @click="formatText('italic')"
-                  class="p-1 rounded hover:bg-gray-200" 
+                  class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300" 
                   title="Italic"
                 >
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -152,7 +153,7 @@
                 <button 
                   type="button" 
                   @click="formatText('heading')"
-                  class="p-1 rounded hover:bg-gray-200" 
+                  class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300" 
                   title="Heading"
                 >
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -162,7 +163,7 @@
                 <button 
                   type="button" 
                   @click="formatText('link')"
-                  class="p-1 rounded hover:bg-gray-200" 
+                  class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300" 
                   title="Link"
                 >
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -172,7 +173,7 @@
                 <button 
                   type="button" 
                   @click="formatText('quote')"
-                  class="p-1 rounded hover:bg-gray-200" 
+                  class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300" 
                   title="Quote"
                 >
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -182,7 +183,7 @@
                 <button 
                   type="button" 
                   @click="formatText('list')"
-                  class="p-1 rounded hover:bg-gray-200" 
+                  class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300" 
                   title="List"
                 >
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -192,7 +193,7 @@
                 <button 
                   type="button" 
                   @click="clearFormatting"
-                  class="p-1 rounded hover:bg-gray-200" 
+                  class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300" 
                   title="Clear Formatting"
                 >
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -207,28 +208,28 @@
                 v-model="formData.content"
                 required
                 rows="12"
-                class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-b-md"
+                class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 rounded-b-md dark:bg-dark-bg-primary dark:text-white"
                 placeholder="Tulis konten artikel disini..."
               ></textarea>
             </div>
-            <p v-if="contentError" class="mt-1 text-sm text-red-600">{{ contentError }}</p>
+            <p v-if="contentError" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ contentError }}</p>
           </div>
           
           <!-- Preview section -->
-        <div v-if="showPreview" class="border border-gray-300 rounded-md p-4 bg-white">
+        <div v-if="showPreview" class="border border-gray-300 dark:border-gray-700 rounded-md p-4 bg-white dark:bg-dark-bg-primary mt-6">
             <div class="flex justify-between items-center mb-4">
-                <h4 class="text-lg font-medium text-gray-900">Preview Artikel</h4>
+                <h4 class="text-lg font-medium text-gray-900 dark:text-white">Preview Artikel</h4>
                 <button 
                 type="button"
                 @click="showPreview = false" 
-                class="text-gray-500 hover:text-gray-700"
+                class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                 >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
                 </button>
             </div>
-            <div class="prose max-w-none" v-html="previewContent"></div>
+            <div class="prose dark:prose-invert prose-blue max-w-none" v-html="previewContent"></div>
         </div>
           
           <!-- Status and options -->
@@ -238,16 +239,16 @@
                 id="status" 
                 type="checkbox" 
                 v-model="isPublished" 
-                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-700 dark:bg-dark-bg-primary rounded"
               />
-              <label for="status" class="ml-2 block text-sm text-gray-900">
+              <label for="status" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">
                 Publikasikan sekarang
               </label>
             </div>
             <button 
               type="button"
               @click="showPreview = true" 
-              class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              class="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-700 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-bg-primary hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-dark-bg-secondary"
             >
               <svg class="-ml-0.5 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -258,16 +259,16 @@
           </div>
         </div>
         
-        <div class="mt-6 pt-6 border-t border-gray-200 flex items-center justify-end space-x-3">
+        <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end space-x-3">
           <NuxtLink 
             to="/admin/blog" 
-            class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            class="inline-flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-700 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-bg-primary hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-dark-bg-secondary"
           >
             Batal
           </NuxtLink>
           <button
             type="submit"
-            class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-dark-bg-secondary"
             :disabled="saving"
           >
             <svg v-if="saving" class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -278,66 +279,67 @@
           </button>
         </div>
       </form>
-      
-      <!-- Add Category Modal -->
-      <Dialog :open="showCategoryForm" @close="showCategoryForm = false" class="relative z-50">
-        <div class="fixed inset-0 bg-black/30" aria-hidden="true" />
-        
-        <div class="fixed inset-0 flex items-center justify-center p-4">
-          <DialogPanel class="mx-auto max-w-md rounded-lg bg-white p-6 shadow-xl">
-            <DialogTitle class="text-lg font-medium leading-6 text-gray-900">
-              Tambah Kategori Baru
-            </DialogTitle>
-            
-            <div class="mt-4">
-              <label for="categoryName" class="block text-sm font-medium text-gray-700">Nama Kategori</label>
-              <div class="mt-1">
-                <input 
-                  id="categoryName" 
-                  v-model="newCategory.name" 
-                  type="text" 
-                  class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                  placeholder="Nama kategori"
-                />
-              </div>
-            </div>
-            
-            <div class="mt-4">
-              <label for="categoryDescription" class="block text-sm font-medium text-gray-700">Deskripsi (Opsional)</label>
-              <div class="mt-1">
-                <textarea 
-                  id="categoryDescription" 
-                  v-model="newCategory.description" 
-                  rows="3"
-                  class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                  placeholder="Deskripsi singkat tentang kategori"
-                ></textarea>
-              </div>
-            </div>
-            
-            <div class="mt-6 flex justify-end space-x-3">
-              <button
-                @click="showCategoryForm = false"
-                class="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              >
-                Batal
-              </button>
-              <button
-                @click="addCategory"
-                class="inline-flex justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                :disabled="!newCategory.name || addingCategory"
-              >
-                <svg v-if="addingCategory" class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Tambah Kategori
-              </button>
-            </div>
-          </DialogPanel>
-        </div>
-      </Dialog>
     </div>
+    
+    <!-- Add Category Modal -->
+    <Dialog :open="showCategoryForm" @close="showCategoryForm = false" class="relative z-50">
+      <div class="fixed inset-0 bg-black/30 dark:bg-black/50" aria-hidden="true" />
+      
+      <div class="fixed inset-0 flex items-center justify-center p-4">
+        <DialogPanel class="mx-auto max-w-md rounded-lg bg-white dark:bg-dark-bg-secondary p-6 shadow-xl">
+          <DialogTitle class="text-lg font-medium leading-6 text-gray-900 dark:text-white">
+            Tambah Kategori Baru
+          </DialogTitle>
+          
+          <div class="mt-4">
+            <label for="categoryName" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nama Kategori</label>
+            <div class="mt-1">
+              <input 
+                id="categoryName" 
+                v-model="newCategory.name" 
+                type="text" 
+                class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 dark:bg-dark-bg-primary dark:text-white rounded-md"
+                placeholder="Nama kategori"
+              />
+            </div>
+          </div>
+          
+          <div class="mt-4">
+            <label for="categoryDescription" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Deskripsi (Opsional)</label>
+            <div class="mt-1">
+              <textarea 
+                id="categoryDescription" 
+                v-model="newCategory.description" 
+                rows="3"
+                class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 dark:bg-dark-bg-primary dark:text-white rounded-md"
+                placeholder="Deskripsi singkat tentang kategori"
+              ></textarea>
+            </div>
+          </div>
+          
+          <div class="mt-6 flex justify-end space-x-3">
+            <button
+              @click="showCategoryForm = false"
+              class="inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-dark-bg-primary px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-dark-bg-secondary"
+            >
+              Batal
+            </button>
+            <button
+              @click="addCategory"
+              class="inline-flex justify-center rounded-md border border-transparent bg-blue-600 dark:bg-blue-700 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-dark-bg-secondary"
+              :disabled="!newCategory.name || addingCategory"
+            >
+              <svg v-if="addingCategory" class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Tambah Kategori
+            </button>
+          </div>
+        </DialogPanel>
+      </div>
+    </Dialog>
+  </div>
 </template>
   
 <script setup lang="ts">

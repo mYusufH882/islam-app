@@ -1,9 +1,9 @@
 <template>
     <div>
       <div class="mb-4 flex justify-between items-center">
-        <div class="mb-2 bg-white dark:bg-dark-bg-secondary p-4 rounded-lg shadow dark:shadow-gray-800">
-          <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Manajemen Bookmark</h2>
-          <p class="text-gray-600 dark:text-gray-400">Lihat bookmark yang dilakukan oleh pengguna</p>
+        <div class="mb-2">
+          <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Manajemen Bookmark</h1>
+          <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Lihat bookmark yang dilakukan oleh pengguna</p>
         </div>
       </div>
   
