@@ -61,53 +61,52 @@
       <div v-else-if="blog" class="space-y-6">
         <!-- Blog header -->
         <div class="bg-white dark:bg-dark-bg-secondary shadow dark:shadow-gray-800 rounded-lg overflow-hidden">
-            <!-- Featured image -->
-            <div v-if="blog.image" class="h-64 bg-gray-200 dark:bg-gray-800">
-                <img 
-                    :src="getImageUrl(blog.image)" 
-                    :alt="blog.title"
-                    class="w-full h-full object-cover"
-                    @error="handleImageError"
-                />
-            </div>
+          <!-- Featured image -->
+          <div v-if="blog.image" class="h-64 bg-gray-200 dark:bg-gray-800">
+            <img 
+              :src="blog.image" 
+              :alt="blog.title"
+              class="w-full h-full object-cover"
+            />
+          </div>
           
-            <!-- Blog info -->
-            <div class="p-6">
-                <div class="flex items-center justify-between mb-2">
-                <div class="flex items-center space-x-3">
-                    <span 
-                    class="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium"
-                    :class="getStatusClass(blog.status)"
-                    >
-                    {{ getStatusLabel(blog.status) }}
-                    </span>
-                    <span class="text-sm text-gray-500 dark:text-gray-400">
-                    {{ formatDate(blog.publishedAt || blog.createdAt) }}
-                    </span>
-                </div>
+          <!-- Blog info -->
+          <div class="p-6">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center space-x-3">
                 <span 
-                    class="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200"
+                  class="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium"
+                  :class="getStatusClass(blog.status)"
                 >
-                    {{ blog.category?.name || 'Tidak ada kategori' }}
+                  {{ getStatusLabel(blog.status) }}
                 </span>
-                </div>
-                
-                <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">{{ blog.title }}</h1>
-                
-                <div class="flex items-center mb-4">
-                <div class="flex-shrink-0 h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white">
-                    {{ getAuthorInitials(blog.author) }}
-                </div>
-                <div class="ml-3">
-                    <p class="text-sm font-medium text-gray-900 dark:text-white">
-                    {{ blog.author?.name || 'Penulis tidak diketahui' }}
-                    </p>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">
-                    {{ blog.author?.username || '' }}
-                    </p>
-                </div>
-                </div>
+                <span class="text-sm text-gray-500 dark:text-gray-400">
+                  {{ formatDate(blog.publishedAt || blog.createdAt) }}
+                </span>
+              </div>
+              <span 
+                class="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200"
+              >
+                {{ blog.category?.name || 'Tidak ada kategori' }}
+              </span>
             </div>
+            
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">{{ blog.title }}</h1>
+            
+            <div class="flex items-center mb-4">
+              <div class="flex-shrink-0 h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white">
+                {{ getAuthorInitials(blog.author) }}
+              </div>
+              <div class="ml-3">
+                <p class="text-sm font-medium text-gray-900 dark:text-white">
+                  {{ blog.author?.name || 'Penulis tidak diketahui' }}
+                </p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                  {{ blog.author?.username || '' }}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
         
         <!-- Blog content -->
@@ -285,36 +284,6 @@
       return '<p>Error rendering content</p>';
     }
   });
-
-  // Helper function to get the correct image URL
-const getImageUrl = (imagePath) => {
-  // If it's already a full URL (starts with http or https)
-  if (imagePath?.startsWith('http://') || imagePath?.startsWith('https://')) {
-    return imagePath;
-  }
-  
-  // If it's a relative path
-  if (imagePath?.startsWith('/')) {
-    return imagePath;
-  }
-  
-  // Otherwise, assume it's in the images directory
-  return `/images/${imagePath}`;
-};
-
-// Handle image loading errors
-const handleImageError = (event) => {
-  // Replace with a placeholder image
-  event.target.src = '/placeholder.jpg';
-};
-
-// Handle image loading errors
-const handleImageError = (event) => {
-  // Replace with a placeholder image
-  event.target.src = '/images/placeholder.jpg';
-  // Log the error for debugging
-  console.warn('Failed to load image:', blog.value?.image);
-};
   
   // Fetch blog data using lazy async data to avoid hydration issues
   const { pending } = useLazyAsyncData(
