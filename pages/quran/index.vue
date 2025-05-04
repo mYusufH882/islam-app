@@ -134,73 +134,94 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue';
+import { useQuranService } from '~/composables/useQuranService';
+
+// Definisikan tipe untuk Surah
+interface Surah {
+  number: number;
+  name: {
+    short: string;
+    transliteration: {
+      id: string;
+    };
+    translation: {
+      id: string;
+    };
+  };
+  revelation: {
+    id: string;
+  };
+  numberOfVerses: number;
+}
 
 // State
-const surahs = ref([]);
-const loading = ref(true);
-const error = ref(null);
-const searchQuery = ref('');
-const currentPage = ref(1);
-const pageSize = ref(10); // Default 10 surat per page
+const surahs = ref<Surah[]>([]);
+const loading = ref<boolean>(true);
+const error = ref<string | null>(null);
+const searchQuery = ref<string>('');
+const currentPage = ref<number>(1);
+const pageSize = ref<number>(10); // Default 10 surat per page
 
-// Computed
-const filteredSurahs = computed(() => {
-  if (!searchQuery.value) {
-    return surahs.value;
-  }
+// Gunakan composable quran service
+const quranService = useQuranService();
+
+// Computed properties
+const filteredSurahs = computed<Surah[]>(() => {
+  if (!searchQuery.value) return surahs.value;
   
   const query = searchQuery.value.toLowerCase();
   return surahs.value.filter(surah => 
-    surah.name.transliteration.id.toLowerCase().includes(query) || 
+    surah.name.transliteration.id.toLowerCase().includes(query) ||
     surah.name.translation.id.toLowerCase().includes(query) ||
     surah.number.toString().includes(query)
   );
 });
 
-// Compute total pages
-const totalPages = computed(() => {
-  return Math.ceil(filteredSurahs.value.length / pageSize.value);
+const totalPages = computed<number>(() => {
+  return Math.ceil(filteredSurahs.value.length / pageSize.value) || 1;
 });
 
-// Get current page surahs
-const paginatedSurahs = computed(() => {
+const paginatedSurahs = computed<Surah[]>(() => {
   const startIndex = (currentPage.value - 1) * pageSize.value;
   const endIndex = startIndex + pageSize.value;
   return filteredSurahs.value.slice(startIndex, endIndex);
 });
 
-// Reset to page 1 when search query changes
+// Menambahkan watcher agar currentPage kembali ke 1 saat mencari
 watch(searchQuery, () => {
   currentPage.value = 1;
 });
 
-// Watch for changes in totalPages
+// Watch untuk memastikan currentPage tidak melebihi totalPages
 watch(totalPages, (newValue) => {
-  // If current page is greater than total pages, reset to last page
   if (currentPage.value > newValue) {
-    currentPage.value = newValue || 1;
+    currentPage.value = newValue;
   }
 });
 
-// Methods
+// Fetch surah list dengan composable quranService
 const fetchSurahList = async () => {
   loading.value = true;
   error.value = null;
   
   try {
-    const response = await fetch('https://api.quran.gading.dev/surah');
-    const data = await response.json();
+    const { data, error: serviceError } = await quranService.fetchAllSurahs();
     
-    if (data.code === 200) {
-      surahs.value = data.data;
+    if (serviceError) {
+      throw new Error(serviceError);
+    }
+    
+    if (data) {
+      surahs.value = data;
     } else {
       error.value = 'Terjadi kesalahan saat memuat daftar surah';
     }
-  } catch (err) {
+  } catch (err: unknown) {
     console.error('Error fetching surah list:', err);
-    error.value = 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.';
+    const errorMessage = err instanceof Error ? err.message : 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.';
+    error.value = errorMessage;
   } finally {
     loading.value = false;
   }
