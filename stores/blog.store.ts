@@ -44,54 +44,48 @@ export const useBlogStore = defineStore('blog', {
         async fetchBlogs() {
             this.loading = true;
             this.error = null;
-
+          
             try {
-                const { apiFetch } = useApi();
-                
-                const params = new URLSearchParams();
-                
-                // Add search parameter if present
-                if (this.searchQuery) {
-                    params.append('search', this.searchQuery);
-                }
-                
-                // Add category parameter if present
-                if (this.categoryFilter !== null) {
-                    params.append('category', this.categoryFilter.toString());
-                }
-                
-                // Important change: Only add status parameter if specific status is requested
-                // When "all" is selected, don't append any status parameter so the API returns all statuses
-                if (this.statusFilter && this.statusFilter !== 'all') {
-                    params.append('status', this.statusFilter);
-                }
-                
-                // Add pagination parameters
-                params.append('page', this.pagination.page.toString());
-                params.append('limit', this.pagination.limit.toString());
-                
-                // Debugging
-                console.log(`Fetching blogs with params: ${params.toString()}`);
-                
-                const { data, error } = await apiFetch<{
-                    blogs: Blog[];
-                    pagination: BlogPagination;
-                }>(`/blogs?${params.toString()}`);
-                
-                if (error.value) {
-                    throw new Error(error.value.message || 'Failed to fetch blogs');
-                }
-                
-                if (data.value && data.value.success) {
-                    this.blogs = data.value.data.blogs;
-                    this.pagination = data.value.data.pagination;
-                    console.log('Fetched blogs with statuses:', this.blogs.map(blog => blog.status));
-                }
-            } catch (err: any) {
-                this.error = err.message || 'An error occurred while fetching blogs';
-                console.error('Fetch blogs error:', err);
+              const { apiFetch } = useApi();
+              
+              const params = new URLSearchParams();
+              
+              // Add search parameter if present
+              if (this.searchQuery) {
+                params.append('search', this.searchQuery);
+              }
+              
+              // Add category parameter if present
+              if (this.categoryFilter !== null) {
+                params.append('category', this.categoryFilter.toString());
+              }
+              
+              // Important: Only add status parameter if a specific status is selected
+              if (this.statusFilter !== null) {
+                params.append('status', this.statusFilter);
+              }
+              
+              // Add pagination parameters
+              params.append('page', this.pagination.page.toString());
+              params.append('limit', this.pagination.limit.toString());
+              
+              console.log(`Fetching blogs with params: ${params.toString()}`);
+              
+              const { data, error } = await apiFetch(`/blogs?${params.toString()}`);
+              
+              if (error.value) {
+                throw new Error(error.value.message || 'Failed to fetch blogs');
+              }
+              
+              if (data.value && data.value.success) {
+                this.blogs = data.value.data.blogs;
+                this.pagination = data.value.data.pagination;
+                console.log('Fetched blogs with statuses:', this.blogs.map(blog => blog.status));
+              }
+            } catch (err) {
+              console.error('Fetch blogs error:', err);
             } finally {
-                this.loading = false;
+              this.loading = false;
             }
         },
 
@@ -138,65 +132,72 @@ export const useBlogStore = defineStore('blog', {
             }
         },
 
-        async createBlog(blogData: Omit<Blog, 'id'>) {
+        async createBlog(blogData: FormData) {
             this.loading = true;
             this.error = null;
             
             try {
-                const { apiFetch } = useApi();
-                
-                const { data, error } = await apiFetch<Blog>('/blogs', {
-                    method: 'POST',
-                    body: blogData
-                });
-                
-                if (error.value) {
-                    throw new Error(error.value.message || 'Gagal membuat blog baru');
+              const { apiFetch } = useApi();
+              
+              const { data, error } = await apiFetch<Blog>('/blogs', {
+                method: 'POST',
+                // Tidak perlu menambahkan Content-Type, browser akan otomatis menambahkan
+                // dengan boundary yang diperlukan untuk multipart/form-data
+                body: blogData,
+                // Pastikan tidak ada transformasi JSON
+                headers: {
+                  'Accept': 'application/json'
                 }
-                
-                if (data.value && data.value.success) {
-                    await this.fetchBlogs();
-                    return true;
-                }
-                
-                return false;
-            } catch (err: any) {
-                this.error = err.message || 'Terjadi kesalahan saat membuat blog baru';
-                console.error('Create blog error:', err);
-                return false;
+              });
+              
+              if (error.value) {
+                throw new Error(error.value.message || 'Gagal membuat blog baru');
+              }
+              
+              if (data.value && data.value.success) {
+                await this.fetchBlogs();
+                return true;
+              }
+              
+              return false;
+            } catch (err) {
+              console.error('Create blog error:', err);
+              return false;
             } finally {
-                this.loading = false;
+              this.loading = false;
             }
         },
-  
-        async updateBlog(id: number, blogData: Partial<Blog>) {
+          
+        async updateBlog(id: number, blogData: FormData) {
             this.loading = true;
             this.error = null;
             
             try {
-                const { apiFetch } = useApi();
-                
-                const { data, error } = await apiFetch<Blog>(`/blogs/${id}`, {
-                    method: 'PUT',
-                    body: blogData
-                });
-                
-                if (error.value) {
-                    throw new Error(error.value.message || 'Gagal mengupdate blog');
+              const { apiFetch } = useApi();
+              
+              const { data, error } = await apiFetch<Blog>(`/blogs/${id}`, {
+                method: 'PUT',
+                body: blogData,
+                headers: {
+                  'Accept': 'application/json'
                 }
-                
-                if (data.value && data.value.success) {
-                    await this.fetchBlogs();
-                    return true;
-                }
-                
-                return false;
-            } catch (err: any) {
-                this.error = err.message || 'Terjadi kesalahan saat mengupdate blog';
-                console.error('Update blog error:', err);
-                return false;
+              });
+              
+              if (error.value) {
+                throw new Error(error.value.message || 'Gagal mengupdate blog');
+              }
+              
+              if (data.value && data.value.success) {
+                await this.fetchBlogs();
+                return true;
+              }
+              
+              return false;
+            } catch (err) {
+              console.error('Update blog error:', err);
+              return false;
             } finally {
-                this.loading = false;
+              this.loading = false;
             }
         },
         

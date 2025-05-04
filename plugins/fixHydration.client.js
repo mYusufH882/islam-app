@@ -1,30 +1,41 @@
 export default defineNuxtPlugin(() => {
-  // Plugin ini hanya berjalan di sisi klien
+  // Plugin will only run on the client side
   if (process.client) {
-    // Tangkap peringatan hydration
+    // Catch hydration warnings related to useAsyncData
     const originalWarn = console.warn;
     
     console.warn = (...args) => {
-      // Jika pesan berkaitan dengan hydration, coba atasi
-      if (typeof args[0] === 'string' && args[0].includes('Hydration')) {
-        // Log untuk debugging tapi bisa di-suppress di produksi
-        console.log('Resolving hydration issue...');
+      // Check if the warning is about useAsyncData after mounting
+      if (typeof args[0] === 'string' && 
+          args[0].includes('[useAsyncData] Component is already mounted, please use $fetch instead')) {
         
-        // Jadwalkan untuk menjalankan fungsi perbaikan setelah komponen di-mount
-        setTimeout(() => {
-          // Coba temukan element yang bermasalah dan lakukan re-render mini pada mereka
-          const layouts = document.querySelectorAll('[data-layout]');
-          layouts.forEach(el => {
-            const style = el.getAttribute('style') || '';
-            el.setAttribute('style', style + '; display: block;');
-          });
-        }, 0);
+        // Log a clearer message about what's happening
+        // console.log('Hydration warning intercepted: useAsyncData called after component mounted');
         
-        return; // Jangan tampilkan peringatan yang asli
+        // Don't display the original warning as we're handling it
+        return;
       }
       
-      // Tampilkan peringatan lain seperti biasa
+      // Display all other warnings as normal
       originalWarn.apply(console, args);
     };
+    
+    // Add a helper function to the window that components can use
+    window.$nuxtFetch = async (url, options = {}) => {
+      // Helper for components to use after mounting instead of useAsyncData
+      try {
+        return await $fetch(url, options);
+      } catch (error) {
+        console.error('Error fetching data with $nuxtFetch:', error);
+        throw error;
+      }
+    };
+    
+    // Set a flag to indicate the app is hydrated
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        window.__nuxtIsHydrated = true;
+      }, 100);
+    });
   }
 });

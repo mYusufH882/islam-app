@@ -267,6 +267,9 @@
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div class="flex space-x-2 justify-end">
+                      <NuxtLink :to="`/admin/blog/${article.id}`" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300">
+                        Lihat
+                      </NuxtLink>
                       <NuxtLink :to="`/admin/blog/${article.id}/edit`" class="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300">
                         Edit
                       </NuxtLink>
@@ -366,12 +369,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { debounce } from 'lodash';
 import { useBlogStore } from '~/stores/blog.store';
 import { storeToRefs } from 'pinia';
+import { useApi } from '~/composables/useApi';
 
-// Definisikan layout untuk halaman ini
+// Define layout for this page
 definePageMeta({
   layout: 'admin'
 });
@@ -391,31 +395,10 @@ const {
   statusFilter: storeStatusFilter
 } = storeToRefs(blogStore);
 
-// Define interfaces for type safety
-interface Category {
-  id: number;
-  name: string;
-}
-
-interface Status {
-  id: number;
-  value: string;
-  name: string;
-}
-
-interface Article {
-  id: number;
-  title: string;
-  description: string;
-  category: string;
-  status: string;
-  date: string;
-}
-
 // Local reactive state
 const searchQuery = ref('');
 const isDeleteModalOpen = ref(false);
-const selectedArticle = ref<Article | null>(null);
+const selectedArticle = ref(null);
 
 const totalStats = ref({
   total: 0,
@@ -423,14 +406,46 @@ const totalStats = ref({
   draft: 0
 });
 
-// Fungsi untuk mengambil statistik blog
+// Status filter options - with null value for "All"
+const statuses = ref([
+  { id: 0, value: null, name: 'Semua Status' },
+  { id: 1, value: 'published', name: 'Dipublikasikan' },
+  { id: 2, value: 'draft', name: 'Draft' }
+]);
+
+// Set default filters and fetch initial data
+// Use useLazyAsyncData instead of onMounted for initial data loading
+const { pending } = useLazyAsyncData('blogInitialData', async () => {
+  // Clear filters to show all blogs
+  storeStatusFilter.value = null;
+  storeCategoryFilter.value = null;
+  storeSearchQuery.value = '';
+  searchQuery.value = '';
+  
+  try {
+    // Fetch categories and blogs
+    await Promise.all([
+      blogStore.fetchCategories(),
+      blogStore.fetchBlogs()
+    ]);
+    
+    // Fetch statistics
+    await fetchBlogStats();
+    return null;
+  } catch (error) {
+    console.error('Error initializing blog data:', error);
+    return null;
+  }
+});
+
+// Function to fetch blog statistics
 const fetchBlogStats = async () => {
   try {
     const { apiFetch } = useApi();
-    const { data, error } = await apiFetch('/blogs/stats');
+    const { data, error: statsError } = await apiFetch('/blogs/stats');
     
-    if (error.value) {
-      console.error('Error fetching blog stats:', error.value);
+    if (statsError.value) {
+      console.error('Error fetching blog stats:', statsError.value);
       return;
     }
     
@@ -442,39 +457,22 @@ const fetchBlogStats = async () => {
   }
 };
 
-onMounted(async () => {
-  // Kode lain yang sudah ada
-  
-  // Tambahkan ini
-  await fetchBlogStats();
-  
-  // Kode lain yang sudah ada
-});
-
-// Status filter options
-const statuses = ref<Status[]>([
-  // { id: 0, value: 'all', name: 'Semua Status' },
-  { id: 1, value: 'published', name: 'Dipublikasikan' },
-  { id: 2, value: 'draft', name: 'Draft' }
-]);
-
-// Selected filters with computed getters/setters
-const selectedStatus = computed({
-  get: () => {
-    const currentStatus = storeStatusFilter.value || 'all';
-    return statuses.value.find(status => status.value === currentStatus) || statuses.value[0];
-  },
-  set: (status: Status) => {
-    // When "all" is selected, use a special value like "all" instead of empty string
-    storeStatusFilter.value = status.value;
-    blogStore.fetchBlogs();
-  }
-});
-
 // Category filter
 const categories = computed(() => {
   const allCategories = { id: 0, name: 'Semua Kategori' };
   return [allCategories, ...storeCategories.value];
+});
+
+// Selected filters with computed getters/setters
+const selectedStatus = computed({
+  get: () => {
+    const currentStatus = storeStatusFilter.value;
+    return statuses.value.find(status => status.value === currentStatus) || statuses.value[0];
+  },
+  set: (status) => {
+    storeStatusFilter.value = status.value;
+    blogStore.fetchBlogs();
+  }
 });
 
 const selectedCategory = computed({
@@ -485,7 +483,7 @@ const selectedCategory = computed({
     const category = categories.value.find(cat => cat.id === currentCategoryId);
     return category || categories.value[0];
   },
-  set: (category: Category) => {
+  set: (category) => {
     storeCategoryFilter.value = category.id === 0 ? null : category.id;
     blogStore.fetchBlogs();
   }
@@ -557,13 +555,13 @@ const pageNumbers = computed(() => {
   return pages;
 });
 
-// TypeScript helper untuk status
-const isValidStatus = (status: string): status is keyof typeof statusClasses => {
+// TypeScript helper for status
+const isValidStatus = (status) => {
   return Object.keys(statusClasses).includes(status);
 };
 
-// Kelas untuk status artikel dengan dukungan dark mode
-const statusClasses: Record<string, string> = {
+// Classes for article status with dark mode support
+const statusClasses = {
   'Dipublikasikan': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
   'Draft': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
 };
@@ -574,46 +572,36 @@ const onSearchInput = debounce(() => {
   blogStore.fetchBlogs();
 }, 300);
 
-const setPage = (page: number) => {
+const setPage = (page) => {
   if (page < 1 || page > totalPages.value) return;
   blogStore.setPage(page);
 };
 
-// Fetch blogs and categories on mount
-onMounted(async () => {
-  // Sync local state with store
-  searchQuery.value = storeSearchQuery.value;
-  
-  // Fetch data
-  await fetchBlogs();
-});
+// Methods for managing blog articles
+const fetchBlogs = async () => {
+  try {
+    await blogStore.fetchBlogs();
+  } catch (err) {
+    console.error('Error fetching blogs:', err);
+  }
+};
 
 // Watch for changes in store query to sync with local state
 watch(storeSearchQuery, (newValue) => {
   searchQuery.value = newValue;
 });
 
-// Methods
-const fetchBlogs = async () => {
-  try {
-    await blogStore.fetchCategories();
-    await blogStore.fetchBlogs();
-  } catch (err) {
-    console.error('Error fetching data:', err);
-  }
-};
-
-const openDeleteModal = (article: Article): void => {
+const openDeleteModal = (article) => {
   selectedArticle.value = article;
   isDeleteModalOpen.value = true;
 };
 
-const closeDeleteModal = (): void => {
+const closeDeleteModal = () => {
   isDeleteModalOpen.value = false;
   selectedArticle.value = null;
 };
 
-const deleteArticle = async (): Promise<void> => {
+const deleteArticle = async () => {
   if (selectedArticle.value) {
     try {
       const success = await blogStore.deleteBlog(selectedArticle.value.id);
@@ -627,13 +615,13 @@ const deleteArticle = async (): Promise<void> => {
 };
 
 // Helper functions
-const truncateText = (text: string, maxLength: number): string => {
+const truncateText = (text, maxLength) => {
   if (!text) return '';
   if (text.length <= maxLength) return text;
   return text.slice(0, maxLength) + '...';
 };
 
-const formatDate = (dateString?: string): string => {
+const formatDate = (dateString) => {
   if (!dateString) return 'Belum dipublikasikan';
   
   try {
@@ -648,7 +636,7 @@ const formatDate = (dateString?: string): string => {
   }
 };
 
-const getExcerpt = (content: string): string => {
+const getExcerpt = (content) => {
   if (!content) return '';
   
   // Remove HTML tags
