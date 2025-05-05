@@ -1,5 +1,3 @@
-// composables/useApi.ts - Verifikasi dan update jika perlu untuk menangani FormData
-
 import { useAuthStore } from "~/stores/auth";
 import type { ApiResponse } from "~/utils/api";
 
