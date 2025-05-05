@@ -33,7 +33,8 @@ export default defineNuxtConfig({
     '~/plugins/auth.ts',
     '~/plugins/dark-mode.client.ts',
     '~/plugins/fixHydration.client.js',
-    '~/plugins/completeHydration.client.js'
+    '~/plugins/completeHydration.client.js',
+    '~/plugins/user-dashboard.client.ts'
   ],
 
   app: {

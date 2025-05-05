@@ -1,4 +1,3 @@
-// stores/auth.ts
 import { defineStore } from 'pinia';
 import { useApi } from '~/composables/useApi';
 import type { ApiResponse, AuthData, UserProfile } from '~/utils/api';

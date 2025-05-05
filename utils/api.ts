@@ -1,4 +1,4 @@
-import type { Category, Blog } from '~/types/blog';  // Menggunakan import type
+import type { Blog } from '~/types/blog';  // Menggunakan import type
 
 export interface ApiResponse<T = any> {
     success: boolean;
