@@ -70,7 +70,6 @@ const close = () => {
 }
   
 const confirmWithRemember = () => {
-  console.log('Confirming logout with remember user flag:', rememberUser.value);
   // Penting: pastikan parameter rememberUser diteruskan dengan benar
   emit('confirm', rememberUser.value);
 }
@@ -83,8 +82,6 @@ onMounted(() => {
     
     // Default ke true jika sebelumnya sudah diaktifkan
     rememberUser.value = rememberMeEnabled;
-    
-    console.log('Initial remember me state:', rememberUser.value);
   }
 });
 </script>

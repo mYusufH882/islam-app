@@ -225,15 +225,26 @@
       <div v-else class="space-y-3">
         <div v-for="article in latestArticles" :key="article.id" class="bg-white p-3 rounded-lg shadow flex items-center space-x-3">
           <div class="w-16 h-16 bg-gray-200 rounded-md flex-shrink-0">
-            <img v-if="article.thumbnail" :src="article.thumbnail" alt="Thumbnail" class="w-full h-full object-cover rounded-md" />
-            <div v-else class="w-full h-full flex items-center justify-center text-gray-400">
-              <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
+            <div class="w-16 h-16 flex-shrink-0 overflow-hidden bg-gray-200 rounded-md">
+              <img 
+                v-if="article.image" 
+                :src="getImageUrl(article.image)" 
+                :alt="article.title"
+                class="w-full h-full object-cover" 
+              />
+              <div v-else class="w-full h-full flex items-center justify-center text-gray-400">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
             </div>
           </div>
           <div>
             <h4 class="font-medium">{{ article.title }}</h4>
+            <p class="text-sm text-gray-600 mb-2 line-clamp-2 flex-grow">
+              {{ truncateText(article.content, 150) }}
+              <span v-if="(article.content || '').length > 50" class="text-gray-400">...</span>
+            </p>
             <p class="text-sm text-gray-500 mt-1">{{ formatArticleDate(article.publishedAt) }}</p>
           </div>
         </div>
@@ -252,7 +263,6 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useUserDashboard } from '~/composables/useUserDashboard';
 import { useAuthStore } from '~/stores/auth';
-import { Dialog, DialogPanel, DialogTitle } from '@headlessui/vue';
 import LoginPromptModal from '~/components/LoginPromptModal.vue';
 
 // Menggunakan composable untuk mengakses state dan methods
@@ -264,11 +274,9 @@ const {
   prayerError,
   lastRead,
   loadingQuran,
-  quranError,
   latestArticles,
   loadingArticles,
   articlesError,
-  dashboardInitialized,
   
   // Actions
   fetchPrayerTimes,
@@ -311,17 +319,23 @@ let timeInterval;
 const latitude = ref(null);
 const longitude = ref(null);
 
-// Daftar kota populer dengan koordinat
-const popularCities = [
-  { name: 'Jakarta', country: 'Indonesia', latitude: -6.2088, longitude: 106.8456 },
-  { name: 'Bandung', country: 'Indonesia', latitude: -6.9175, longitude: 107.6191 },
-  { name: 'Surabaya', country: 'Indonesia', latitude: -7.2575, longitude: 112.7521 },
-  { name: 'Yogyakarta', country: 'Indonesia', latitude: -7.7971, longitude: 110.3688 },
-  { name: 'Semarang', country: 'Indonesia', latitude: -6.9932, longitude: 110.4203 },
-  { name: 'Medan', country: 'Indonesia', latitude: 3.5896, longitude: 98.6731 },
-  { name: 'Makassar', country: 'Indonesia', latitude: -5.1477, longitude: 119.4327 },
-  { name: 'Palembang', country: 'Indonesia', latitude: -2.9761, longitude: 104.7754 }
-];
+const truncateText = (text, maxLength) => {
+  if (!text) return '';
+  
+  // Strip HTML tags if present
+  const strippedText = text.replace(/<[^>]*>/g, '');
+  
+  // If the text is already shorter than maxLength, return it as is
+  if (strippedText.length <= maxLength) {
+    return strippedText;
+  }
+  
+  // Find the last space before maxLength to avoid cutting words
+  const lastSpace = strippedText.substring(0, maxLength).lastIndexOf(' ');
+  
+  // If no space found, just cut at maxLength
+  return strippedText.substring(0, lastSpace > 0 ? lastSpace : maxLength);
+};
 
 // Fungsi untuk mendapatkan lokasi pengguna
 function getGeoLocation() {

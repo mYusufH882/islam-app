@@ -73,8 +73,6 @@ const initiateLogout = () => {
 // Handle the actual logout after confirmation (or directly for admins)
 const handleLogout = async (rememberUser = false) => {
   try {
-    console.log('Logging out with remember user flag:', rememberUser);
-    
     // Eksplisit meneruskan parameter rememberUser ke fungsi logout
     await authStore.logout(rememberUser);
     
