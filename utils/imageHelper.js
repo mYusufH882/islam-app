@@ -18,7 +18,7 @@ export const getImageUrl = (path) => {
   if (process.client) {
     try {
       // Use environment variables with fallbacks
-      backendUrl = config.public.BACKEND_URL || config.public.apiBaseUrl;
+      backendUrl = config.public.apiBaseUrl || 'http://localhost:3001';
       
       // Remove '/api' suffix if it exists
       if (backendUrl && backendUrl.endsWith('/api')) {

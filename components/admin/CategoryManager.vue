@@ -147,7 +147,8 @@
 <script setup lang="ts">
   import { ref, reactive, computed, onMounted } from 'vue';
   import { Dialog, DialogPanel, DialogTitle } from '@headlessui/vue';
-  import { useBlogStore, type Category } from '~/stores/blog.store';
+  import { useBlogStore } from '~/stores/blog.store';
+  import type { Category } from '~/types/blog';
   
   // Store
   const blogStore = useBlogStore();
