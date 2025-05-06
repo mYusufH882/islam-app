@@ -1,9 +1,7 @@
-// stores/user-dashboard.store.ts
 import { defineStore } from 'pinia';
 import { useAuthStore } from '~/stores/auth';
 import { useApi } from '~/composables/useApi';
 import { usePrayerService } from '~/composables/usePrayerService';
-import { useQuranService } from '~/composables/useQuranService';
 
 export interface LastRead {
   surah: {

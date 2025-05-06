@@ -62,9 +62,9 @@
       </div>
 
       <!-- Pagination controls -->
-      <div class="flex justify-between items-center mb-20">
+      <div class="flex justify-between items-center mb-4">
         <!-- Page size selector -->
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-4">
           <span class="text-sm text-gray-500">Tampilkan:</span>
           <select 
             v-model="pageSize" 
