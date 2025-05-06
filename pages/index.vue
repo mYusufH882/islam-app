@@ -243,12 +243,17 @@
       </div>
     </div>
   </div>
+  <ClientOnly>
+    <LoginPromptModal :showDelay="2000" />
+  </ClientOnly>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useUserDashboard } from '~/composables/useUserDashboard';
+import { useAuthStore } from '~/stores/auth';
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/vue';
+import LoginPromptModal from '~/components/LoginPromptModal.vue';
 
 // Menggunakan composable untuk mengakses state dan methods
 const {
@@ -279,6 +284,8 @@ const {
 // State untuk modal pemilihan lokasi
 const showLocationSelector = ref(false);
 const locationPermissionGranted = ref(false);
+
+const authStore = useAuthStore();
 
 // Current Date & Time
 const currentDate = new Date().toLocaleDateString('id-ID', { 
@@ -508,19 +515,6 @@ onMounted(() => {
       updateNextPrayer();
     }
   }, 1000);
-  
-  // Coba dapatkan lokasi
-  if (!prayerLocation.value) {
-    // Jika lokasi belum ada, coba dapatkan dari localStorage dulu
-    const storedLocation = process.client ? localStorage.getItem('prayer_location') : null;
-    
-    if (storedLocation) {
-      useStoredLocation();
-    } else {
-      // Jika tidak ada data di localStorage, langsung meminta geolokasi
-      requestGeolocation();
-    }
-  }
 
   if (process.client && location.protocol !== 'https:' && location.hostname !== 'localhost') {
     console.warn('Geolocation memerlukan HTTPS. Aplikasi saat ini berjalan di ' + location.protocol);

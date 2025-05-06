@@ -1,4 +1,3 @@
-// pages/auth/login.vue
 <template>
   <ClientOnly>
     <div class="min-h-screen flex flex-col justify-center py-6 px-4 sm:py-12 sm:px-6 lg:px-8 bg-blue-700">
@@ -73,6 +72,28 @@
               </div>
             </div>
 
+            <!-- Remember me checkbox -->
+            <div class="flex items-center justify-between">
+              <div class="flex items-center">
+                <input
+                  id="remember-me"
+                  v-model="rememberMe"
+                  name="remember-me"
+                  type="checkbox"
+                  class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label for="remember-me" class="ml-2 text-sm text-gray-700">
+                  Ingat saya
+                </label>
+              </div>
+              
+              <div class="text-sm">
+                <NuxtLink to="/auth/forgot-password" class="font-medium text-blue-600 hover:text-blue-500">
+                  Lupa password?
+                </NuxtLink>
+              </div>
+            </div>
+
             <!-- Submit button -->
             <div>
               <button
@@ -137,7 +158,7 @@ definePageMeta({
   ssr: false // Memastikan ini tidak di-render di server
 });
 
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useAuthStore } from '~/stores/auth';
 import { useRouter } from 'vue-router';
 
@@ -147,8 +168,37 @@ const authStore = useAuthStore();
 // Form data
 const identifier = ref('');
 const password = ref('');
+const rememberMe = ref(false); // Tambahkan state untuk checkbox remember me
 const loading = ref(false);
 const error = ref('');
+
+// Load saved user data when component mounts
+onMounted(() => {
+  if (process.client) {
+    try {
+      // Check if remember me is enabled
+      const isRememberMeEnabled = localStorage.getItem('remember_me_enabled') === 'true';
+      
+      if (isRememberMeEnabled) {
+        // Get remembered user data
+        const rememberedUserJson = localStorage.getItem('remembered_user');
+        if (rememberedUserJson) {
+          const rememberedUser = JSON.parse(rememberedUserJson);
+          
+          // Auto-fill form with remembered data
+          identifier.value = rememberedUser.username || rememberedUser.email || '';
+          
+          // Check remember me checkbox
+          rememberMe.value = true;
+          
+          console.log('Form auto-filled with remembered user:', identifier.value);
+        }
+      }
+    } catch (err) {
+      console.error('Error loading remembered user data:', err);
+    }
+  }
+});
 
 async function login() {
   error.value = '';
@@ -164,6 +214,23 @@ async function login() {
     const success = await authStore.login(identifier.value, password.value);
     
     if (success) {
+      // If login successful and remember me is checked, save user data
+      if (process.client && rememberMe.value && authStore.user) {
+        const userToRemember = {
+          username: authStore.user.username || '',
+          email: authStore.user.email || '',
+          timestamp: new Date().toISOString()
+        };
+        
+        localStorage.setItem('remembered_user', JSON.stringify(userToRemember));
+        localStorage.setItem('remember_me_enabled', 'true');
+        console.log('User data saved for remember me:', userToRemember);
+      } else if (process.client && !rememberMe.value) {
+        localStorage.removeItem('remembered_user');
+        localStorage.removeItem('remember_me_enabled');
+      }
+      
+      // Redirect based on role
       if (authStore.user?.role === 'admin') {
         await router.push('/admin');
       } else {
