@@ -16,18 +16,26 @@
           <!-- Updated logout button with different behavior based on user role -->
           <button 
             @click="initiateLogout" 
-            class="text-white hover:text-blue-200"
+            class="text-white hover:text-blue-200 flex items-center"
           >
+            <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
             Logout
           </button>
         </nav>
         <nav v-else class="flex space-x-4">
-          <NuxtLink to="/auth/login" class="text-white hover:text-blue-200">Login</NuxtLink>
+          <NuxtLink to="/auth/login" class="text-white hover:text-blue-200 flex items-center">
+            <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+            </svg>
+            Login
+          </NuxtLink>
         </nav>
       </div>
     </header>
     
-    <!-- Logout confirmation modal (only for regular users) -->
+    <!-- Logout confirmation modal (enhanced version) -->
     <LogoutConfirmationModal
       :is-open="showLogoutModal"
       @close="showLogoutModal = false"
@@ -41,7 +49,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { canAccessAdmin } from '~/utils/permissions';
 import { useAuthStore } from '~/stores/auth';
-import LogoutConfirmationModal from '~/components/LogoutConfirmationModal.vue';
+import LogoutConfirmationModal from './LogoutConfirmationModal.vue';
 
 const router = useRouter();
 const config = useRuntimeConfig();
@@ -63,9 +71,35 @@ const initiateLogout = () => {
 };
 
 // Handle the actual logout after confirmation (or directly for admins)
-const handleLogout = async () => {
+// components/AppHeader.vue - perbaikan fungsi handleLogout
+const handleLogout = async (rememberUser = false) => {
   try {
-    await authStore.logout();
+    console.log('Logging out with remember user flag:', rememberUser);
+    
+    // Jika token sudah tidak valid atau expired, kita tetap bisa logout dengan aman
+    try {
+      await authStore.logout(rememberUser);
+    } catch (error) {
+      console.error('API logout failed, but continuing with client-side logout:', error);
+      
+      // Jika API logout gagal, kita tetap lakukan logout client-side
+      if (rememberUser && authStore.user) {
+        const userToRemember = {
+          username: authStore.user.username || '',
+          email: authStore.user.email || '',
+          timestamp: new Date().toISOString()
+        };
+        localStorage.setItem('remembered_user', JSON.stringify(userToRemember));
+        localStorage.setItem('remember_me_enabled', 'true');
+      } else {
+        localStorage.removeItem('remembered_user');
+        localStorage.removeItem('remember_me_enabled');
+      }
+      
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_refresh_token');
+      authStore.$reset();
+    }
     
     // Close the modal if it was open
     showLogoutModal.value = false;

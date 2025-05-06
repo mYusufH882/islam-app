@@ -7,6 +7,11 @@ interface AuthState {
   token: string | null;
   refreshToken: string | null;
   isAuthenticated: boolean;
+  rememberedUser: {
+    username?: string;
+    email?: string;
+    timestamp?: string;
+  } | null;
 }
 
 export const useAuthStore = defineStore('auth', {
@@ -14,11 +19,12 @@ export const useAuthStore = defineStore('auth', {
     user: null,
     token: null,
     refreshToken: null,
-    isAuthenticated: false
+    isAuthenticated: false,
+    rememberedUser: null
   }),
   
   actions: {
-    async login(username: string, password: string): Promise<boolean> {
+    async login(username: string, password: string, rememberMe: boolean = false): Promise<boolean> {
       try {
         const { apiFetch } = useApi();
         
@@ -34,6 +40,28 @@ export const useAuthStore = defineStore('auth', {
         if (data.value && data.value.success) {
           const authData = data.value.data;
           this.setAuthData(authData);
+          
+          // Tambahkan ini: simpan flag "remember me" jika diaktifkan
+          if (process.client && rememberMe) {
+            // Simpan data pengguna untuk "remember me"
+            const userToRemember = {
+              username: authData.user.username || '',
+              email: authData.user.email || '',
+              timestamp: new Date().toISOString()
+            };
+            
+            localStorage.setItem('remembered_user', JSON.stringify(userToRemember));
+            localStorage.setItem('remember_me_enabled', 'true');
+            this.rememberedUser = userToRemember;
+            
+            console.log('Remember me enabled, saved user data');
+          } else if (process.client) {
+            // Hapus data "remember me" jika tidak diaktifkan
+            localStorage.removeItem('remembered_user');
+            localStorage.removeItem('remember_me_enabled');
+            this.rememberedUser = null;
+          }
+          
           return true;
         }
         
@@ -88,41 +116,128 @@ export const useAuthStore = defineStore('auth', {
       }
     },
     
-    logout(): Promise<void> {
+    logout(rememberUser = false): Promise<void> {
       return new Promise((resolve) => {
         // 1. Simpan refreshToken untuk API call
-        const refreshToken = this.refreshToken
+        const refreshToken = this.refreshToken;
         
-        // 2. Clear state immediately
-        this.user = null
-        this.token = null
-        this.refreshToken = null
-        this.isAuthenticated = false
-        
-        // 3. Clear storage
-        if (process.client) {
-          localStorage.removeItem('auth_token')
-          localStorage.removeItem('auth_refresh_token')
+        // 2. Simpan data user jika rememberUser = true
+        if (process.client && rememberUser && this.user) {
+          try {
+            const userToRemember = {
+              username: this.user.username || '',
+              email: this.user.email || '',
+              timestamp: new Date().toISOString()
+            };
+            
+            localStorage.setItem('remembered_user', JSON.stringify(userToRemember));
+            localStorage.setItem('remember_me_enabled', 'true');
+            console.log('User data saved for remember me:', userToRemember);
+          } catch (error) {
+            console.error('Error saving remembered user:', error);
+          }
         }
         
-        // 4. Call API logout (fire and forget)
+        // 3. Clear state
+        this.user = null;
+        this.token = null;
+        this.refreshToken = null;
+        this.isAuthenticated = false;
+        this.rememberedUser = null;
+        
+        // 4. Clear storage except remembered_user if rememberUser=true
+        if (process.client) {
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('auth_refresh_token');
+          
+          if (!rememberUser) {
+            localStorage.removeItem('remembered_user');
+            localStorage.removeItem('remember_me_enabled');
+          }
+        }
+        
+        // 5. Call API logout only if token available
+        // This avoids the 401 error when token is missing
         if (refreshToken) {
-          const { apiFetch } = useApi()
+          const { apiFetch } = useApi();
           apiFetch('/auth/logout', {
             method: 'POST',
             body: { refreshToken }
-          }).finally(resolve)
+          }).then(() => {
+            console.log('Logout API call successful');
+            resolve();
+          }).catch((error) => {
+            console.error('Logout API call failed, but continuing logout process:', error);
+            resolve(); // Resolve anyway to ensure UI updates
+          });
         } else {
-          resolve()
+          console.log('No refresh token available, skipping API logout call');
+          resolve();
         }
-      })
+      });
+    },
+
+    getRememberedUser(): { username?: string; email?: string; } | null {
+      if (!process.client) return null;
+      
+      try {
+        // Cek apakah fitur "remember me" diaktifkan
+        const rememberMeEnabled = localStorage.getItem('remember_me_enabled') === 'true';
+        if (!rememberMeEnabled) return null;
+        
+        // Ambil data user dari localStorage
+        const rememberedUserJson = localStorage.getItem('remembered_user');
+        if (!rememberedUserJson) return null;
+        
+        const rememberedUser = JSON.parse(rememberedUserJson);
+        
+        // Validasi apakah sudah kedaluwarsa (7 hari)
+        const storedTime = new Date(rememberedUser.timestamp || new Date()).getTime();
+        const currentTime = new Date().getTime();
+        const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000;
+        
+        if (currentTime - storedTime > sevenDaysInMs) {
+          // Sudah kedaluwarsa, hapus
+          localStorage.removeItem('remembered_user');
+          localStorage.removeItem('remember_me_enabled');
+          this.rememberedUser = null;
+          return null;
+        }
+        
+        // Jika valid, update state dan kembalikan data
+        this.rememberedUser = rememberedUser;
+        
+        console.log('Retrieved remembered user:', rememberedUser);
+        
+        return {
+          username: rememberedUser.username || '',
+          email: rememberedUser.email || ''
+        };
+      } catch (error) {
+        console.error('Error retrieving remembered user:', error);
+        localStorage.removeItem('remembered_user');
+        localStorage.removeItem('remember_me_enabled');
+        this.rememberedUser = null;
+        return null;
+      }
     },
 
     async init(): Promise<void> {      
       // Pastikan hanya dijalankan di sisi klien
-      if (process.client) {;
+      if (process.client) {
           const token = localStorage.getItem('auth_token');
           const refreshToken = localStorage.getItem('auth_refresh_token');
+          
+          // Load rememberedUser
+          const rememberedUserJson = localStorage.getItem('remembered_user');
+          if (rememberedUserJson) {
+            try {
+              this.rememberedUser = JSON.parse(rememberedUserJson);
+            } catch (error) {
+              console.error('Error parsing remembered user:', error);
+              this.rememberedUser = null;
+            }
+          }
                     
           if (token && refreshToken) {
               this.token = token;

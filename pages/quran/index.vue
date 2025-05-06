@@ -16,9 +16,7 @@
           class="w-full p-3 bg-white rounded-lg shadow pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <div class="absolute left-3 top-3 text-gray-400">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </div>
       </div>
     </div>
@@ -62,48 +60,59 @@
       </div>
 
       <!-- Pagination controls -->
-      <div class="flex justify-between items-center mb-4">
+      <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
         <!-- Page size selector -->
-        <div class="flex items-center space-x-4">
-          <span class="text-sm text-gray-500">Tampilkan:</span>
-          <select 
-            v-model="pageSize" 
-            class="bg-white border border-gray-300 rounded-md p-1 text-sm"
-            @change="currentPage = 1"
-          >
-            <option :value="5">5</option>
-            <option :value="10">10</option>
-            <option :value="15">15</option>
-            <option :value="20">20</option>
-          </select>
+        <div class="flex items-center w-full sm:w-auto">
+          <span class="text-sm text-gray-500 mr-2">Tampilkan:</span>
+          <div class="relative inline-block">
+            <select 
+              v-model="pageSize" 
+              class="appearance-none bg-white border border-gray-300 rounded-md py-1 pl-3 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              @change="currentPage = 1"
+            >
+              <option :value="5">5</option>
+              <option :value="10">10</option>
+              <option :value="15">15</option>
+              <option :value="20">20</option>
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+              <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+              </svg>
+            </div>
+          </div>
         </div>
         
         <!-- Pagination buttons -->
-        <div class="flex space-x-2">
+        <div class="flex space-x-1 sm:space-x-2 w-full sm:w-auto justify-center sm:justify-end">
           <button 
             @click="currentPage = 1" 
             :disabled="currentPage === 1"
             :class="[
-              'px-3 py-1 rounded-md text-sm',
+              'px-2 sm:px-3 py-1 rounded-md text-xs sm:text-sm',
               currentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-blue-600 hover:bg-blue-50'
             ]"
+            aria-label="First page"
           >
-            Awal
+            <span class="hidden sm:inline">Awal</span>
+            <span class="sm:hidden">«</span>
           </button>
           
           <button 
             @click="currentPage--" 
             :disabled="currentPage === 1"
             :class="[
-              'px-3 py-1 rounded-md text-sm',
+              'px-2 sm:px-3 py-1 rounded-md text-xs sm:text-sm',
               currentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-blue-600 hover:bg-blue-50'
             ]"
+            aria-label="Previous page"
           >
-            &laquo;
+            <span class="hidden sm:inline">«</span>
+            <span class="sm:hidden">‹</span>
           </button>
           
           <!-- Page number display -->
-          <div class="px-3 py-1 bg-white rounded-md text-sm">
+          <div class="px-2 sm:px-3 py-1 bg-white rounded-md text-xs sm:text-sm min-w-[60px] text-center">
             {{ currentPage }} / {{ totalPages }}
           </div>
           
@@ -111,22 +120,26 @@
             @click="currentPage++" 
             :disabled="currentPage === totalPages"
             :class="[
-              'px-3 py-1 rounded-md text-sm',
+              'px-2 sm:px-3 py-1 rounded-md text-xs sm:text-sm',
               currentPage === totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-blue-600 hover:bg-blue-50'
             ]"
+            aria-label="Next page"
           >
-            &raquo;
+            <span class="hidden sm:inline">»</span>
+            <span class="sm:hidden">›</span>
           </button>
           
           <button 
             @click="currentPage = totalPages" 
             :disabled="currentPage === totalPages"
             :class="[
-              'px-3 py-1 rounded-md text-sm',
+              'px-2 sm:px-3 py-1 rounded-md text-xs sm:text-sm',
               currentPage === totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-blue-600 hover:bg-blue-50'
             ]"
+            aria-label="Last page"
           >
-            Akhir
+            <span class="hidden sm:inline">Akhir</span>
+            <span class="sm:hidden">»</span>
           </button>
         </div>
       </div>
@@ -135,7 +148,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useQuranService } from '~/composables/useQuranService';
 
 // Definisikan tipe untuk Surah
