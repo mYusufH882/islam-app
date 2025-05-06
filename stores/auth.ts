@@ -121,43 +121,51 @@ export const useAuthStore = defineStore('auth', {
         // 1. Simpan refreshToken untuk API call
         const refreshToken = this.refreshToken;
         
-        // 2. Simpan data user jika rememberUser = true
+        // PENTING: Simpan terlebih dahulu data user yang akan diingat SEBELUM mereset state
+        // karena setelah state direset, this.user akan null
+        let userToRemember = null;
         if (process.client && rememberUser && this.user) {
           try {
-            const userToRemember = {
+            userToRemember = {
               username: this.user.username || '',
               email: this.user.email || '',
               timestamp: new Date().toISOString()
             };
             
+            // Simpan data sebelum state direset
             localStorage.setItem('remembered_user', JSON.stringify(userToRemember));
             localStorage.setItem('remember_me_enabled', 'true');
+            
             console.log('User data saved for remember me:', userToRemember);
           } catch (error) {
             console.error('Error saving remembered user:', error);
           }
         }
         
-        // 3. Clear state
+        // 2. Clear state
         this.user = null;
         this.token = null;
         this.refreshToken = null;
         this.isAuthenticated = false;
         this.rememberedUser = null;
         
-        // 4. Clear storage except remembered_user if rememberUser=true
+        // 3. Clear storage SECARA SELEKTIF berdasarkan flag rememberUser
         if (process.client) {
+          // Token autentikasi selalu dihapus
           localStorage.removeItem('auth_token');
           localStorage.removeItem('auth_refresh_token');
           
-          if (!rememberUser) {
-            localStorage.removeItem('remembered_user');
-            localStorage.removeItem('remember_me_enabled');
-          }
+          // Hapus data "remember me" HANYA jika rememberUser = false
+          // if (!rememberUser) {
+          //   localStorage.removeItem('remembered_user');
+          //   localStorage.removeItem('remember_me_enabled');
+          //   console.log('Remember me data cleared');
+          // } else {
+          //   console.log('Remember me data preserved');
+          // }
         }
         
-        // 5. Call API logout only if token available
-        // This avoids the 401 error when token is missing
+        // 4. Call API logout (jika ada token)
         if (refreshToken) {
           const { apiFetch } = useApi();
           apiFetch('/auth/logout', {
@@ -167,11 +175,11 @@ export const useAuthStore = defineStore('auth', {
             console.log('Logout API call successful');
             resolve();
           }).catch((error) => {
-            console.error('Logout API call failed, but continuing logout process:', error);
-            resolve(); // Resolve anyway to ensure UI updates
+            console.error('Logout API call failed, but client-side logout completed:', error);
+            resolve(); // Tetap resolve untuk memastikan UI terupdate
           });
         } else {
-          console.log('No refresh token available, skipping API logout call');
+          console.log('No refresh token available, skipping API logout');
           resolve();
         }
       });

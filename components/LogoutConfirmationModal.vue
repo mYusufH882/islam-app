@@ -46,7 +46,8 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/vue';
-  
+import { useAuthStore } from '~/stores/auth';
+
 // Props untuk mengontrol status modal
 const props = defineProps({
   isOpen: {
@@ -54,6 +55,8 @@ const props = defineProps({
     required: true
   }
 });
+
+const authStore = useAuthStore();
 
 // State untuk checkbox "Ingat saya"
 const rememberUser = ref(false);
@@ -67,18 +70,21 @@ const close = () => {
 }
   
 const confirmWithRemember = () => {
-  console.log('Confirming logout with remember user:', rememberUser.value);
+  console.log('Confirming logout with remember user flag:', rememberUser.value);
+  // Penting: pastikan parameter rememberUser diteruskan dengan benar
   emit('confirm', rememberUser.value);
 }
 
 // Cek apakah user sebelumnya mengaktifkan "remember me"
 onMounted(() => {
   if (process.client) {
-    const rememberedUser = localStorage.getItem('remembered_user');
-    const rememberEnabled = localStorage.getItem('remember_me_enabled') === 'true';
+    // Periksa apakah fitur "remember me" diaktifkan
+    const rememberMeEnabled = localStorage.getItem('remember_me_enabled') === 'true';
     
-    // Set checkbox berdasarkan status remember me dan ketersediaan data user
-    rememberUser.value = !!(rememberedUser && rememberEnabled);
+    // Default ke true jika sebelumnya sudah diaktifkan
+    rememberUser.value = rememberMeEnabled;
+    
+    console.log('Initial remember me state:', rememberUser.value);
   }
 });
 </script>

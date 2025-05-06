@@ -71,18 +71,23 @@ const initiateLogout = () => {
 };
 
 // Handle the actual logout after confirmation (or directly for admins)
-// components/AppHeader.vue - perbaikan fungsi handleLogout
 const handleLogout = async (rememberUser = false) => {
   try {
     console.log('Logging out with remember user flag:', rememberUser);
     
-    // Jika token sudah tidak valid atau expired, kita tetap bisa logout dengan aman
-    try {
-      await authStore.logout(rememberUser);
-    } catch (error) {
-      console.error('API logout failed, but continuing with client-side logout:', error);
-      
-      // Jika API logout gagal, kita tetap lakukan logout client-side
+    // Eksplisit meneruskan parameter rememberUser ke fungsi logout
+    await authStore.logout(rememberUser);
+    
+    // Close the modal if it was open
+    showLogoutModal.value = false;
+    
+    // Redirect to login page after successful logout
+    router.push('/auth/login');
+  } catch (error) {
+    console.error('Logout error, but continuing with client-side logout:', error);
+    
+    // Jika API logout gagal, pastikan data remember me tetap disimpan jika diperlukan
+    if (process.client) {
       if (rememberUser && authStore.user) {
         const userToRemember = {
           username: authStore.user.username || '',
@@ -91,23 +96,12 @@ const handleLogout = async (rememberUser = false) => {
         };
         localStorage.setItem('remembered_user', JSON.stringify(userToRemember));
         localStorage.setItem('remember_me_enabled', 'true');
-      } else {
-        localStorage.removeItem('remembered_user');
-        localStorage.removeItem('remember_me_enabled');
       }
       
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('auth_refresh_token');
+      // Reset state
       authStore.$reset();
+      router.push('/auth/login');
     }
-    
-    // Close the modal if it was open
-    showLogoutModal.value = false;
-    
-    // Redirect to login page after successful logout
-    router.push('/auth/login');
-  } catch (error) {
-    console.error('Logout failed:', error);
   }
 };
 </script>
