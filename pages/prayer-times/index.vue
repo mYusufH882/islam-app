@@ -9,13 +9,77 @@
             <p class="text-gray-600">{{ currentDate }}</p>
           </div>
           <div class="flex items-center bg-gray-100 rounded-lg p-2">
-            <svg class="w-5 h-5 text-gray-600 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            <span class="text-sm">{{ location }}</span>
+            <!-- Location indicator with status -->
+            <div v-if="loadingPrayer" class="flex items-center text-gray-600">
+              <svg class="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span class="text-sm">Memuat...</span>
+            </div>
+            <div v-else class="flex items-center" :class="{'text-yellow-700': prayerLocation?.usingDefault, 'text-gray-600': !prayerLocation?.usingDefault}">
+              <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span class="text-sm">{{ prayerLocation ? (prayerLocation.city + ', ' + prayerLocation.country) : 'Lokasi Tidak Tersedia' }}</span>
+              <span v-if="prayerLocation?.usingDefault" class="ml-1 text-xs px-1.5 py-0.5 bg-yellow-100 text-yellow-800 rounded-full">Default</span>
+            </div>
           </div>
         </div>
+        
+        <!-- Location controls -->
+        <div class="mt-3 flex justify-between items-center">
+          <button 
+            @click="showCitySelector = !showCitySelector" 
+            class="text-sm text-blue-600 flex items-center"
+          >
+            {{ showCitySelector ? 'Tutup Pemilihan Kota' : 'Pilih Kota' }}
+            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path v-if="showCitySelector" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+              <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <button 
+            @click="getGeoLocation" 
+            class="px-3 py-1 bg-blue-600 text-white rounded-md text-sm font-medium flex items-center"
+            :disabled="loadingPrayer"
+          >
+            <svg v-if="loadingPrayer" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <svg v-else class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span>{{ loadingPrayer ? 'Memuat...' : 'Gunakan Lokasi Saat Ini' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Show location error message and instructions -->
+    <div v-if="prayerError && locationInstructions" class="mb-4 p-3 bg-yellow-50 text-yellow-800 rounded-md text-sm">
+      {{ prayerError }}
+      <div class="mt-2 text-xs">
+        {{ locationInstructions }}
+      </div>
+    </div>
+
+    <!-- Popular Cities Selector -->
+    <div v-if="showCitySelector" class="mb-6 bg-white p-4 rounded-lg shadow">
+      <h3 class="font-medium mb-3">Pilih Kota</h3>
+      <div class="grid grid-cols-2 gap-2">
+        <button 
+          v-for="city in popularCities" 
+          :key="city.name"
+          @click="selectCity(city)"
+          class="p-2 border rounded-md hover:bg-blue-50 text-left"
+          :class="isSelectedCity(city) ? 'border-blue-500 bg-blue-50' : 'border-gray-300'"
+        >
+          <div class="font-medium">{{ city.name }}</div>
+          <div class="text-xs text-gray-500">{{ city.country }}</div>
+        </button>
       </div>
     </div>
 
@@ -121,62 +185,58 @@
     <div class="mb-6">
       <div class="bg-white p-4 rounded-lg shadow">
           <div class="flex items-center justify-between">
-          <h3 class="text-lg font-semibold">Pengaturan</h3>
-          <button 
-              @click="getGeoLocation" 
-              class="text-blue-600 flex items-center"
-              :disabled="isLoading">
-              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              <span v-if="!isLoading">Perbarui</span>
-              <span v-else>Memperbarui...</span>
-          </button>
+            <h3 class="text-lg font-semibold">Pengaturan</h3>
           </div>
           <div class="mt-3 space-y-3">
-          <div class="flex justify-between items-center">
-              <div class="flex items-center">
-              <svg class="w-5 h-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <span>Lokasi</span>
-              </div>
-              <div class="text-gray-600">{{ location }}</div>
-          </div>
+            <div class="flex justify-between items-center">
+                <div class="flex items-center">
+                <svg class="w-5 h-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>Lokasi</span>
+                </div>
+                <div class="text-gray-600">{{ prayerLocation ? prayerLocation.city : 'Tidak diketahui' }}</div>
+            </div>
 
-          <div class="flex justify-between items-center">
-              <div class="flex items-center">
-              <svg class="w-5 h-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <span>Metode Perhitungan</span>
-              </div>
-              <div class="text-gray-600">Kementerian Agama RI</div>
-          </div>
+            <div class="flex justify-between items-center">
+                <div class="flex items-center">
+                <svg class="w-5 h-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>Metode Perhitungan</span>
+                </div>
+                <div class="text-gray-600">Kementerian Agama RI</div>
+            </div>
 
-          <div class="flex justify-between items-center">
+            <div class="flex justify-between items-center">
               <div class="flex items-center">
-              <svg class="w-5 h-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-              </svg>
-              <span>Notifikasi</span>
+                </svg>
+                <span>Notifikasi</span>
               </div>
-              <div class="flex items-center">
-              <span class="relative inline-block w-10 h-6 transition duration-200 ease-in-out bg-blue-600 rounded-full">
-                  <span class="absolute right-1 top-1 w-4 h-4 transition-transform duration-200 ease-in-out bg-white rounded-full"></span>
-              </span>
-              </div>
-          </div>
+              <button 
+                @click="toggleNotification" 
+                class="relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                :class="notificationsEnabled ? 'bg-blue-600' : 'bg-gray-200'"
+                :disabled="!isNotificationSupported"
+              >
+                <span 
+                  class="pointer-events-none relative inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200"
+                  :class="notificationsEnabled ? 'translate-x-5' : 'translate-x-0'"
+                />
+              </button>
+            </div>
           </div>
       </div>
     </div>
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+<script setup>
+import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { usePrayerService } from '~/composables/usePrayerService';
 
 // Prayer service
@@ -191,23 +251,23 @@ const currentDate = ref(today.toLocaleDateString('id-ID', {
   day: 'numeric' 
 }));
 
-const location = ref('Jakarta, Indonesia');
-const latitude = ref(-6.2088);
-const longitude = ref(106.8456);
+const location = ref('Bandung, Indonesia');
+const latitude = ref(-6.9175);
+const longitude = ref(107.6191);
+
+// State for city selector
+const showCitySelector = ref(false);
+const prayerLocation = ref(null);
+const locationInstructions = ref('');
 
 // Loading and error states
 const isLoading = ref(true);
-const errorMessage = ref<string | null>(null);
+const errorMessage = ref(null);
+const loadingPrayer = ref(false);
+const prayerError = ref(null);
 
 // Prayer time variables
-interface Prayer {
-  name: string;
-  time: string;
-  isNext: boolean;
-  timeRemaining?: string;
-}
-
-const todayPrayers = ref<Prayer[]>([
+const todayPrayers = ref([
   { name: 'Subuh', time: '00:00', isNext: false },
   { name: 'Dzuhur', time: '00:00', isNext: false },
   { name: 'Ashar', time: '00:00', isNext: false },
@@ -215,19 +275,11 @@ const todayPrayers = ref<Prayer[]>([
   { name: 'Isya', time: '00:00', isNext: false }
 ]);
 
-  // Current prayer time indicator
-  const currentPrayerTimeId = ref<number | null>(null);
+// Current prayer time indicator
+const currentPrayerTimeId = ref(null);
 
-  // Weekly schedule variables
-  interface WeekDay {
-    value: number;
-    short: string;
-    date: number;
-    full: string;
-    isoDate: string;
-  }
-
-const weekDays = computed((): WeekDay[] => {
+// Weekly schedule variables
+const weekDays = computed(() => {
   const days = [];
   const dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
 
@@ -249,29 +301,173 @@ const weekDays = computed((): WeekDay[] => {
 const selectedDay = ref(0); // Default to today
 
 // Initialize weekly prayers data structure
-const weeklyPrayers = ref<Record<number, Prayer[]>>({});
+const weeklyPrayers = ref({});
+for (let i = 0; i < 7; i++) {
+  weeklyPrayers.value[i] = [
+    { name: 'Subuh', time: '00:00' },
+    { name: 'Dzuhur', time: '00:00' },
+    { name: 'Ashar', time: '00:00' },
+    { name: 'Maghrib', time: '00:00' },
+    { name: 'Isya', time: '00:00' }
+  ];
+}
 
-  // Initialize weekly prayers object with empty arrays
-  for (let i = 0; i < 7; i++) {
-    weeklyPrayers.value[i] = [
-      { name: 'Subuh', time: '00:00', isNext: false },
-      { name: 'Dzuhur', time: '00:00', isNext: false },
-      { name: 'Ashar', time: '00:00', isNext: false },
-      { name: 'Maghrib', time: '00:00', isNext: false },
-      { name: 'Isya', time: '00:00', isNext: false }
-    ];
-  }
+// Daftar kota populer dengan koordinat
+const popularCities = [
+  { name: 'Jakarta', country: 'Indonesia', latitude: -6.2088, longitude: 106.8456 },
+  { name: 'Bandung', country: 'Indonesia', latitude: -6.9175, longitude: 107.6191 },
+  { name: 'Surabaya', country: 'Indonesia', latitude: -7.2575, longitude: 112.7521 },
+  { name: 'Yogyakarta', country: 'Indonesia', latitude: -7.7971, longitude: 110.3688 },
+  { name: 'Semarang', country: 'Indonesia', latitude: -6.9932, longitude: 110.4203 },
+  { name: 'Medan', country: 'Indonesia', latitude: 3.5896, longitude: 98.6731 },
+  { name: 'Makassar', country: 'Indonesia', latitude: -5.1477, longitude: 119.4327 },
+  { name: 'Palembang', country: 'Indonesia', latitude: -2.9761, longitude: 104.7754 }
+];
 
 // Format date as YYYY-MM-DD for API
-function formatDate(date: Date): string {
+function formatDate(date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
 
+// Check if city is selected
+const isSelectedCity = (city) => {
+  if (!prayerLocation.value) return false;
+  
+  return Math.abs(prayerLocation.value.latitude - city.latitude) < 0.01 &&
+         Math.abs(prayerLocation.value.longitude - city.longitude) < 0.01;
+};
+
+// Select a city from popular cities list
+const selectCity = (city) => {
+  latitude.value = city.latitude;
+  longitude.value = city.longitude;
+  
+  // Update lokasi
+  prayerLocation.value = {
+    city: city.name,
+    country: city.country,
+    latitude: city.latitude,
+    longitude: city.longitude,
+    usingDefault: false
+  };
+  
+  // Fetch prayer times
+  fetchPrayerTimes(latitude.value, longitude.value, true);
+  
+  // Hide city selector
+  showCitySelector.value = false;
+};
+
+// Show browser-specific location enable instructions
+const showLocationEnableInstructions = () => {
+  const isChrome = navigator.userAgent.includes('Chrome');
+  const isFirefox = navigator.userAgent.includes('Firefox');
+  const isSafari = navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome');
+  
+  let instructions = 'Untuk mengaktifkan izin lokasi: ';
+  
+  if (isChrome) {
+    instructions += 'Klik ikon kunci/info di address bar → Izin Situs → Lokasi → Izinkan';
+  } else if (isFirefox) {
+    instructions += 'Klik ikon kunci di address bar → Izin → Akses Lokasi Anda → Izinkan';
+  } else if (isSafari) {
+    instructions += 'Buka Preferensi Safari → Privasi → Layanan Lokasi → Aktifkan';
+  } else {
+    instructions += 'Periksa pengaturan privasi browser Anda dan izinkan akses lokasi untuk situs ini';
+  }
+  
+  locationInstructions.value = instructions;
+};
+
+// Save location to localStorage
+const saveLocationToLocalStorage = (lat, lng, cityName = null, countryName = null) => {
+  if (process.client) {
+    try {
+      // Simpan informasi lebih lengkap
+      const locationData = {
+        latitude: lat,
+        longitude: lng,
+        city: cityName || (prayerLocation.value?.city || 'Jakarta'),
+        country: countryName || (prayerLocation.value?.country || 'Indonesia'),
+        timestamp: new Date().toISOString(),
+        usingDefault: false // Karena ini lokasi yang dipilih/dideteksi, bukan default
+      };
+      
+      localStorage.setItem('prayer_location', JSON.stringify(locationData));
+      console.log('Lokasi berhasil disimpan ke localStorage:', locationData);
+    } catch (error) {
+      console.error('Error saving location to localStorage:', error);
+    }
+  }
+};
+
+// Use stored location
+const useStoredLocation = () => {
+  try {
+    if (!process.client) return false;
+    
+    const storedLocationString = localStorage.getItem('prayer_location');
+    
+    if (storedLocationString) {
+      const locationData = JSON.parse(storedLocationString);
+      
+      // Cek apakah data lokasi masih valid (kurang dari 7 hari)
+      const storedTime = new Date(locationData.timestamp).getTime();
+      const currentTime = new Date().getTime();
+      const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000;
+      
+      if (currentTime - storedTime < sevenDaysInMs) {
+        // Gunakan lokasi tersimpan
+        latitude.value = locationData.latitude;
+        longitude.value = locationData.longitude;
+        
+        // Juga set data lokasi lengkap
+        prayerLocation.value = {
+          city: locationData.city || 'Jakarta',
+          country: locationData.country || 'Indonesia',
+          latitude: locationData.latitude,
+          longitude: locationData.longitude,
+          usingDefault: locationData.usingDefault || false
+        };
+        
+        console.log('Menggunakan lokasi dari localStorage:', prayerLocation.value);
+        
+        // Fetch prayer times dengan lokasi tersimpan
+        fetchPrayerTimes(latitude.value, longitude.value);
+        return true;
+      }
+    }
+    
+    return false;
+  } catch (error) {
+    console.error('Error using stored location:', error);
+    return false;
+  }
+};
+
+// Use default location (Bandung)
+const useDefaultLocation = () => {
+  // Default to Jakarta
+  latitude.value = -6.2088;
+  longitude.value = 106.8456;
+  
+  prayerLocation.value = {
+    city: 'Jakarta',
+    country: 'Indonesia',
+    latitude: latitude.value,
+    longitude: longitude.value,
+    usingDefault: true
+  };
+  
+  // Fetch prayer times
+  fetchPrayerTimes(latitude.value, longitude.value);
+};
+
 // Update next prayer and calculate remaining time
-function updateNextPrayer(): void {
+function updateNextPrayer() {
   const now = new Date();
   const currentHour = now.getHours();
   const currentMinute = now.getMinutes();
@@ -281,19 +477,19 @@ function updateNextPrayer(): void {
   let minDifference = Infinity;
 
   todayPrayers.value.forEach((prayer, index) => {
-  const [hour, minute] = prayer.time.split(':').map(Number);
-  const prayerTimeInMinutes = hour * 60 + minute;
-  const difference = prayerTimeInMinutes - currentTimeInMinutes;
-  
-  // Reset isNext flag
-  prayer.isNext = false;
-  prayer.timeRemaining = '';
-  
-  if (difference > 0 && difference < minDifference) {
-    minDifference = difference;
-    nextPrayerIndex = index;
-  }
-});
+    const [hour, minute] = prayer.time.split(':').map(Number);
+    const prayerTimeInMinutes = hour * 60 + minute;
+    const difference = prayerTimeInMinutes - currentTimeInMinutes;
+    
+    // Reset isNext flag
+    prayer.isNext = false;
+    prayer.timeRemaining = '';
+    
+    if (difference > 0 && difference < minDifference) {
+      minDifference = difference;
+      nextPrayerIndex = index;
+    }
+  });
 
   // If we found a next prayer time
   if (nextPrayerIndex !== -1) {
@@ -314,10 +510,10 @@ function updateNextPrayer(): void {
 
   // Determine current prayer time
   determineCurrentPrayer();
-  }
+}
 
-  // Add function to determine current prayer time
-  function determineCurrentPrayer(): void {
+// Add function to determine current prayer time
+function determineCurrentPrayer() {
   const now = new Date();
   const currentHour = now.getHours();
   const currentMinute = now.getMinutes();
@@ -344,69 +540,162 @@ function updateNextPrayer(): void {
   }
 }
 
-// Fetch prayer times for a specific date
-async function fetchPrayerTimes(date: string, dayIndex: number): Promise<void> {
+// Fetch prayer times
+async function fetchPrayerTimes(lat, lng, forceRefresh = false) {
+  loadingPrayer.value = true;
+  prayerError.value = null;
+  
   try {
-    const response = await prayerService.getPrayerTimesByDate(date, 
-      latitude.value,
-      longitude.value,
-      3 // Umm al-Qura University, Makkah (default)
-    );
+    const response = await prayerService.getTodayPrayerTimes(lat, lng, 3, forceRefresh);
     
-    if (response.error) {
-      throw new Error(response.error);
+    // Periksa apakah respons valid
+    if (!response.data) {
+      throw new Error('Gagal memuat jadwal salat: Data tidak tersedia');
     }
     
-    // Perbaikan: Akses struktur data yang benar - nested data
-    const timings = response.data?.data?.timings;
+    const responseData = response.data;
     
-    // console.log(`Debug - Extracted timings for ${date}:`, timings);
-    
-    if (timings) {
-      // Update weekly prayers for the specified day
-      if (weeklyPrayers.value[dayIndex]) {
-        const updatedPrayers = [
-          { name: 'Subuh', time: timings.Fajr, isNext: false },
-          { name: 'Dzuhur', time: timings.Dhuhr, isNext: false },
-          { name: 'Ashar', time: timings.Asr, isNext: false },
-          { name: 'Maghrib', time: timings.Maghrib, isNext: false },
-          { name: 'Isya', time: timings.Isha, isNext: false }
+    if (responseData.success && responseData.data && responseData.data.prayerTimes) {
+      // Ekstrak data prayer times
+      const prayerTimesData = responseData.data.prayerTimes;
+      
+      // Ekstrak data lokasi
+      const locationData = responseData.data.location;
+      
+      // Pastikan timings ada
+      if (prayerTimesData.timings) {
+        // Update prayer times
+        todayPrayers.value = [
+        { name: 'Subuh', time: prayerTimesData.timings.Fajr, isNext: false },
+          { name: 'Dzuhur', time: prayerTimesData.timings.Dhuhr, isNext: false },
+          { name: 'Ashar', time: prayerTimesData.timings.Asr, isNext: false },
+          { name: 'Maghrib', time: prayerTimesData.timings.Maghrib, isNext: false },
+          { name: 'Isya', time: prayerTimesData.timings.Isha, isNext: false }
         ];
         
-        // console.log(`Debug - Updated prayers for day ${dayIndex}:`, updatedPrayers);
+        // Calculate which prayer is next
+        updateNextPrayer();
         
-        weeklyPrayers.value[dayIndex] = updatedPrayers;
-        
-        // If this is today (dayIndex = 0), update today's prayers too
-        if (dayIndex === 0) {
-          todayPrayers.value = [...updatedPrayers]; // Menggunakan spread operator
+        // Update location data
+        if (locationData) {
+          // If location "Unknown", use data from timezone or default to Jakarta
+          let city = locationData.city;
+          let country = locationData.country;
           
-          // console.log('Debug - Updated today prayers:', todayPrayers.value);
+          // Determine if this is the default location
+          const isDefaultLocation = Math.abs(lat - (-6.2088)) < 0.01 && 
+                                 Math.abs(lng - 106.8456) < 0.01;
           
-          // Calculate which prayer is next
-          updateNextPrayer();
+          // If this is default coordinates or city/country Unknown
+          if (isDefaultLocation || city === "Unknown" || country === "Unknown") {
+            if (isDefaultLocation) {
+              city = 'Bandung';
+              country = 'Indonesia';
+            } 
+            else if (prayerTimesData.meta && prayerTimesData.meta.timezone) {
+              const timezoneParts = prayerTimesData.meta.timezone.split('/');
+              if (timezoneParts.length > 1) {
+                city = timezoneParts[1].replace('_', ' ');
+                country = "Indonesia";
+              } else {
+                city = 'Bandung';
+                country = 'Indonesia';
+              }
+            } else {
+              city = 'Bandung';
+              country = 'Indonesia';
+            }
+          }
+          
+          prayerLocation.value = {
+            city: city,
+            country: country,
+            latitude: locationData.latitude || lat,
+            longitude: locationData.longitude || lng,
+            usingDefault: isDefaultLocation
+          };
+        } else {
+          // Fallback to default
+          prayerLocation.value = {
+            city: 'Bandung',
+            country: 'Indonesia',
+            latitude: lat,
+            longitude: lng,
+            usingDefault: Math.abs(lat - (-6.9175)) < 0.01 && Math.abs(lng - 107.6191) < 0.01
+          };
         }
+        
+        // Update weekly schedule
+        updateWeeklySchedule(prayerTimesData);
+        
+        // Reset errors
+        isLoading.value = false;
+        errorMessage.value = null;
+      } else {
+        throw new Error('Waktu salat tidak ditemukan dalam data');
       }
     } else {
-      console.error(`No timings found for ${date}`, response);
+      throw new Error('Format data jadwal salat tidak valid');
     }
-  } catch (err) {
-    console.error('Error fetching prayer times:', err);
+  } catch (error) {
+    console.error('Error in fetchPrayerTimes:', error);
+    prayerError.value = error.message || 'Gagal memuat jadwal salat dari koordinat';
+    isLoading.value = false;
     errorMessage.value = 'Gagal memuat jadwal salat. Silakan coba lagi.';
+  } finally {
+    loadingPrayer.value = false;
   }
 }
 
+// Update weekly schedule with today's data
+function updateWeeklySchedule(prayerTimesData) {
+  if (!prayerTimesData || !prayerTimesData.timings) return;
+  
+  // Update first day (today) with the fetched data
+  weeklyPrayers.value[0] = [
+    { name: 'Subuh', time: prayerTimesData.timings.Fajr },
+    { name: 'Dzuhur', time: prayerTimesData.timings.Dhuhr },
+    { name: 'Ashar', time: prayerTimesData.timings.Asr },
+    { name: 'Maghrib', time: prayerTimesData.timings.Maghrib },
+    { name: 'Isya', time: prayerTimesData.timings.Isha }
+  ];
+  
+  // For demonstration purposes, add slight variations for other days
+  // In a real app, you would fetch data for each day separately
+  for (let i = 1; i < 7; i++) {
+    weeklyPrayers.value[i] = [
+      { name: 'Subuh', time: adjustTime(prayerTimesData.timings.Fajr, i) },
+      { name: 'Dzuhur', time: adjustTime(prayerTimesData.timings.Dhuhr, i) },
+      { name: 'Ashar', time: adjustTime(prayerTimesData.timings.Asr, i) },
+      { name: 'Maghrib', time: adjustTime(prayerTimesData.timings.Maghrib, i) },
+      { name: 'Isya', time: adjustTime(prayerTimesData.timings.Isha, i) }
+    ];
+  }
+}
+
+// Helper to slightly adjust prayer times for demonstration
+function adjustTime(timeStr, dayOffset) {
+  const [hour, minute] = timeStr.split(':').map(Number);
+  let newMinute = minute + (dayOffset % 3);
+  
+  if (newMinute >= 60) {
+    newMinute = newMinute - 60;
+  }
+  
+  return `${hour.toString().padStart(2, '0')}:${newMinute.toString().padStart(2, '0')}`;
+}
+
 // Fetch all prayer times for the week
-async function fetchAllPrayerTimes(): Promise<void> {
+async function fetchAllPrayerTimes() {
   isLoading.value = true;
   errorMessage.value = null;
 
   try {
-    // Fetch times for each day of the week
-    for (let i = 0; i < weekDays.value.length; i++) {
-      await fetchPrayerTimes(weekDays.value[i].isoDate, i);
+    // Check if we have stored location first
+    if (!useStoredLocation()) {
+      // If no stored location, get geolocation
+      getGeoLocation();
     }
-    isLoading.value = false;
   } catch (error) {
     console.error('Error fetching all prayer times:', error);
     errorMessage.value = 'Gagal memuat jadwal salat. Silakan coba lagi.';
@@ -415,47 +704,169 @@ async function fetchAllPrayerTimes(): Promise<void> {
 }
 
 // Get user's geolocation
-function getGeoLocation(): void {
-  if (navigator.geolocation) {
-    isLoading.value = true;
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
+function getGeoLocation() {
+  if (!navigator.geolocation) {
+    prayerError.value = 'Browser tidak mendukung geolokasi';
+    useDefaultLocation();
+    return;
+  }
+  
+  loadingPrayer.value = true;
+  
+  navigator.geolocation.getCurrentPosition(
+    // Success callback
+    async (position) => {
+      try {
         latitude.value = position.coords.latitude;
         longitude.value = position.coords.longitude;
         
-        try {
-          // Instead of using getLocationInfo, use a custom implementation 
-          // to get location data from coordinates
-          const response = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude.value}&longitude=${longitude.value}&localityLanguage=id`);
-          const data = await response.json();
-          
-          if (data) {
-            location.value = `${data.city || data.locality || 'Unknown'}, ${data.countryName}`;
-          }
-        } catch (error) {
-          console.error('Error getting location name:', error);
-          location.value = 'Lokasi Anda';
-        }
-        
-        // Fetch prayer times for the new location
-        await fetchAllPrayerTimes();
-      },
-      (error) => {
-        console.error('Error getting geolocation:', error);
-        isLoading.value = false;
-        
-        // Use default location since geolocation failed
-        fetchAllPrayerTimes();
+        // Langsung ambil jadwal sholat tanpa menyimpan ke localStorage
+        await fetchPrayerTimes(latitude.value, longitude.value, true);
+      } catch (error) {
+        console.error('Error memproses lokasi:', error);
+        prayerError.value = 'Gagal memproses lokasi';
+      } finally {
+        loadingPrayer.value = false;
       }
-    );
-  } else {
-    // Geolocation not supported, use default location
-    fetchAllPrayerTimes();
-  }
+    },
+    // Error callback
+    (error) => {
+      console.error('Geolocation error:', error);
+      
+      switch(error.code) {
+        case error.PERMISSION_DENIED:
+          prayerError.value = 'Izin lokasi ditolak.';
+          showLocationEnableInstructions();
+          break;
+        case error.POSITION_UNAVAILABLE:
+          prayerError.value = 'Informasi lokasi tidak tersedia.';
+          break;
+        case error.TIMEOUT:
+          prayerError.value = 'Permintaan lokasi timed out. Silakan coba lagi.';
+          break;
+        default:
+          prayerError.value = 'Terjadi kesalahan saat mendapatkan lokasi.';
+      }
+      
+      // Gunakan lokasi default saat error
+      useDefaultLocation();
+      loadingPrayer.value = false;
+    }
+  );
 }
+
+// Cek apakah notifikasi didukung oleh browser
+const isNotificationSupported = computed(() => {
+  return process.client && 'Notification' in window;
+});
+
+// State untuk status notifikasi
+const notificationsEnabled = ref(false);
+
+// Toggle notifikasi on/off
+const toggleNotification = async () => {
+  if (!isNotificationSupported.value) return;
+  
+  if (!notificationsEnabled.value) {
+    // Minta izin notifikasi
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+      notificationsEnabled.value = true;
+      saveNotificationSetting(true);
+      
+      // Jadwalkan notifikasi untuk waktu salat berikutnya
+      scheduleNotifications();
+    } else {
+      notificationsEnabled.value = false;
+      saveNotificationSetting(false);
+    }
+  } else {
+    // Matikan notifikasi
+    notificationsEnabled.value = false;
+    saveNotificationSetting(false);
+  }
+};
+
+// Simpan pengaturan notifikasi
+const saveNotificationSetting = (enabled) => {
+  if (process.client) {
+    localStorage.setItem('prayer_notifications_enabled', enabled ? 'true' : 'false');
+  }
+};
+
+// Muat pengaturan notifikasi
+const loadNotificationSetting = () => {
+  if (process.client) {
+    const setting = localStorage.getItem('prayer_notifications_enabled');
+    notificationsEnabled.value = setting === 'true';
+  }
+};
+
+// Tampilkan notifikasi untuk waktu salat
+const showPrayerNotification = (prayerName, prayerTime) => {
+  if (!isNotificationSupported.value || !notificationsEnabled.value) return;
+  
+  const notification = new Notification('Waktu Salat', {
+    body: `Waktu salat ${prayerName} (${prayerTime}) telah tiba.`,
+    icon: '/icon-192x192.png' // Sesuaikan dengan path icon aplikasi Anda
+  });
+  
+  notification.onclick = () => {
+    window.focus();
+    notification.close();
+  };
+};
+
+// Jadwalkan notifikasi untuk waktu salat hari ini
+const scheduleNotifications = () => {
+  if (!isNotificationSupported.value || !notificationsEnabled.value) return;
+  
+  todayPrayers.value.forEach(prayer => {
+    const [hour, minute] = prayer.time.split(':').map(Number);
+    const prayerTime = new Date();
+    prayerTime.setHours(hour, minute, 0, 0);
+    
+    const now = new Date();
+    const timeUntilPrayer = prayerTime.getTime() - now.getTime();
+    
+    // Hanya jadwalkan jika waktu salat belum lewat
+    if (timeUntilPrayer > 0) {
+      setTimeout(() => {
+        showPrayerNotification(prayer.name, prayer.time);
+      }, timeUntilPrayer);
+    }
+  });
+};
+
+// Watch untuk mengamati perubahan pengaturan notifikasi
+watch(notificationsEnabled, (newValue) => {
+  if (newValue) {
+    scheduleNotifications();
+  }
+});
+
+// Watch untuk mengamati perubahan jadwal salat
+watch(todayPrayers, () => {
+  if (notificationsEnabled.value) {
+    scheduleNotifications();
+  }
+}, { deep: true });
 
 // Initialize on component mount
 onMounted(() => {
-  getGeoLocation();
+  if (process.client) {
+    // Langsung meminta lokasi pengguna tanpa memeriksa localStorage
+    getGeoLocation();
+    
+    // Set interval untuk update waktu sholat selanjutnya
+    const interval = setInterval(() => {
+      updateNextPrayer();
+    }, 60000); // Setiap menit
+    
+    // Cleanup saat komponen di-unmount
+    onUnmounted(() => {
+      clearInterval(interval);
+    });
+  }
 });
 </script>

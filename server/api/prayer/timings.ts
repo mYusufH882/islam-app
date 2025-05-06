@@ -3,7 +3,7 @@ import { defineEventHandler, getQuery } from 'h3'
 export default defineEventHandler(async (event) => {
   // Ambil query parameters
   const query = getQuery(event)
-  const { latitude, longitude, method } = query
+  const { latitude, longitude, method, forceRefresh } = query
   
   // Validasi input
   if (!latitude || !longitude) {
@@ -23,6 +23,7 @@ export default defineEventHandler(async (event) => {
     queryString.append('latitude', latitude.toString())
     queryString.append('longitude', longitude.toString())
     if (method) queryString.append('method', method.toString())
+    if (forceRefresh === 'true') queryString.append('forceRefresh', 'true')
     
     // Buat URL untuk API backend dengan query string
     const url = `${baseUrl}/api/prayer/timings?${queryString.toString()}`

@@ -9,13 +9,16 @@ export const usePrayerService = () => {
      * @param longitude - Koordinat longitude
      * @param method - Metode perhitungan (opsional)
      */
-    const getTodayPrayerTimes = async (latitude: number, longitude: number, method?: number) => {
+    const getTodayPrayerTimes = async (latitude: number, longitude: number, method?: number, forceRefresh: boolean = false) => {
       try {
         // Build query parameters
         const params = new URLSearchParams();
         params.append('latitude', latitude.toString());
         params.append('longitude', longitude.toString());
         if (method) params.append('method', method.toString());
+        
+        // Add forceRefresh parameter if true
+        if (forceRefresh) params.append('forceRefresh', 'true');
         
         // Use apiBaseUrl from the config
         const response = await fetch(`${apiBaseUrl}/prayer/timings?${params.toString()}`);
@@ -25,9 +28,8 @@ export const usePrayerService = () => {
           throw new Error(errorData.message || 'Failed to fetch prayer times');
         }
         
-          const data = await response.json();
-        //   console.log(data);
-          
+        const data = await response.json();
+        
         return { data, error: null };
       } catch (error) {
         console.error('Error fetching today prayer times:', error);
