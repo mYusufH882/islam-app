@@ -433,13 +433,8 @@ onMounted(async () => {
 async function loadCategories() {
   categoriesLoading.value = true;
   try {
-    console.log('Loading categories...');
     if (!categories.value.length) {
-      console.log('Categories not found in store, fetching...');
       await blogStore.fetchCategories();
-      console.log('Categories fetched:', categories.value);
-    } else {
-      console.log('Categories already in store:', categories.value);
     }
   } catch (error) {
     console.error('Error loading categories:', error);

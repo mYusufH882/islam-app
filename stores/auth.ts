@@ -172,14 +172,12 @@ export const useAuthStore = defineStore('auth', {
             method: 'POST',
             body: { refreshToken }
           }).then(() => {
-            console.log('Logout API call successful');
             resolve();
           }).catch((error) => {
             console.error('Logout API call failed, but client-side logout completed:', error);
             resolve(); // Tetap resolve untuk memastikan UI terupdate
           });
         } else {
-          console.log('No refresh token available, skipping API logout');
           resolve();
         }
       });
