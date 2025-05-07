@@ -148,37 +148,34 @@
           class="bg-white p-4 rounded-lg shadow"
           :id="`ayat-${verse.number.inSurah}`"
         >
-          <div class="flex justify-between items-start mb-3">
-            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-              <span class="text-blue-600 font-medium">{{ verse.number.inSurah }}</span>
-            </div>
-            <div class="flex space-x-1">
-              <button 
-                @click="bookmarkVerse(verse)" 
-                class="p-1.5 sm:p-2 rounded-full hover:bg-gray-100"
-                title="Bookmark ayat ini"
-                aria-label="Bookmark ayat ini"
-              >
-                <svg class="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                </svg>
-              </button>
-              <button 
-                @click="shareVerse(verse)" 
-                class="p-1.5 sm:p-2 rounded-full hover:bg-gray-100"
-                title="Bagikan ayat ini"
-                aria-label="Bagikan ayat ini"
-              >
-                <svg class="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                </svg>
-              </button>
-            </div>
+        <div class="flex justify-between items-start mb-3">
+          <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+            <span class="text-blue-600 font-medium">{{ verse.number.inSurah }}</span>
           </div>
+          <div class="flex space-x-1">
+            <!-- Replace existing bookmark button with our new component -->
+            <BookmarkIcon
+              :is-bookmarked="isVerseBookmarked(surah.number, verse.number.inSurah)"
+              :surah-id="surah.number"
+              :verse-id="verse.number.inSurah"
+              @update:bookmark="handleBookmarkUpdate($event, verse)"
+            />
+            <!-- Keep the existing share button -->
+            <button 
+              @click="shareVerse(verse)" 
+              class="p-1.5 rounded-full hover:bg-gray-100"
+              title="Bagikan ayat ini"
+              aria-label="Bagikan ayat ini"
+            >
+              <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+              </svg>
+            </button>
+          </div>
+        </div>
           <p class="text-xl font-arabic text-right leading-loose mb-4">{{ verse.text.arab }}</p>
           <p class="text-gray-700 mb-2 text-sm italic">{{ verse.text.transliteration.en }}</p>
           <p class="text-gray-800">{{ verse.translation.id }}</p>
-          
         </div>
       </div>
       
@@ -277,6 +274,14 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router'; // Tambahkan import useRouter
 import { useQuranService } from '~/composables/useQuranService';
+import { useBookmarkService } from '~/composables/useBookmarkService';
+import BookmarkIcon from '~/components/quran/BookmarkIcon.vue';
+
+interface BookmarkEvent {
+  surahId: number;
+  verseId: number;
+  action: 'add' | 'remove';
+}
 
 // Interfaces
 interface Verse {
@@ -344,6 +349,41 @@ const scrollThreshold = ref<number>(300); // Show buttons after scrolling this m
 
 // Gunakan composable quran service
 const quranService = useQuranService();
+
+const bookmarkService = useBookmarkService();
+
+const isVerseBookmarked = (surahId: number, verseId: number): boolean => {
+  return bookmarkService.isBookmarked(surahId, verseId);
+};
+
+const handleBookmarkUpdate = async (event: BookmarkEvent, verse: Verse): Promise<void> => {
+  try {
+    if (event.action === 'add') {
+      await bookmarkService.addBookmark({
+        surahId: event.surahId,
+        verseId: event.verseId,
+        surahName: surah.value.name?.transliteration?.id || '',
+        surahNameArab: surah.value.name?.short || '',
+        text: verse.text.arab,
+        translation: verse.translation.id
+      });
+      
+      // Show success message
+      alert('Ayat berhasil ditambahkan ke bookmark');
+    } else {
+      await bookmarkService.removeBookmark({
+        surahId: event.surahId,
+        verseId: event.verseId
+      });
+      
+      // Show success message
+      alert('Ayat berhasil dihapus dari bookmark');
+    }
+  } catch (error) {
+    console.error('Error updating bookmark:', error);
+    alert('Gagal memperbarui bookmark. Silakan coba lagi.');
+  }
+};
 
 // Computed properties
 const totalAyat = computed<number>(() => {

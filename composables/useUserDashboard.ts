@@ -121,6 +121,7 @@ export const useUserDashboard = () => {
     loadBookmarks,
     fetchUserBookmarks,
     fetchLatestArticles,
+    refreshLatestArticles: dashboardStore.refreshLatestArticles,
     initDashboard,
     
     // Helpers

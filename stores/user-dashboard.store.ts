@@ -383,6 +383,34 @@ export const useUserDashboardStore = defineStore('userDashboard', {
         this.loadingArticles = false;
       }
     },
+
+    //Refresh blog without reload page
+    async refreshLatestArticles() {
+      // Don't show the full loading state to avoid UI flicker
+      this.articlesError = null;
+      
+      try {
+        const { apiFetch } = useApi();
+        
+        const { data } = await apiFetch('/blogs', {
+          params: {
+            limit: 3,
+            status: 'published',
+            sort: 'publishedAt:desc',
+            forceRefresh: true // Add a parameter to bypass any caching
+          }
+        });
+        
+        if (data.value && data.value.success) {
+          this.latestArticles = data.value.data.blogs;
+        } else {
+          this.articlesError = 'Tidak ada artikel yang tersedia saat ini.';
+        }
+      } catch (error) {
+        console.error('Error refreshing latest articles:', error);
+        this.articlesError = 'Gagal memperbarui artikel terbaru.';
+      }
+    },
     
     // Dashboard initialization
     async initDashboard() {

@@ -204,9 +204,14 @@
     <div class="mb-6">
       <div class="flex justify-between items-center mb-3">
         <h3 class="text-lg font-semibold">Artikel Terbaru</h3>
-        <NuxtLink to="/blog" class="text-sm text-blue-600">Semua Artikel</NuxtLink>
+        <NuxtLink to="/blog" class="text-sm text-blue-600 flex items-center">
+          Semua Artikel
+          <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </NuxtLink>
       </div>
-      <!-- Skeleton loader untuk artikel -->
+      <!-- Skeleton loader for articles -->
       <div v-if="loadingArticles" class="space-y-3">
         <div v-for="i in 3" :key="i" class="bg-white p-3 rounded-lg shadow flex items-center space-x-3">
           <div class="w-16 h-16 bg-gray-200 rounded-md flex-shrink-0 animate-pulse"></div>
@@ -223,7 +228,7 @@
         </button>
       </div>
       <div v-else class="space-y-3">
-        <div v-for="article in latestArticles" :key="article.id" class="bg-white p-3 rounded-lg shadow flex items-center space-x-3">
+        <div v-for="article in displayedArticles" :key="article.id" class="bg-white p-3 rounded-lg shadow flex items-center space-x-3">
           <div class="w-16 h-16 bg-gray-200 rounded-md flex-shrink-0">
             <div class="w-16 h-16 flex-shrink-0 overflow-hidden bg-gray-200 rounded-md">
               <img 
@@ -242,14 +247,34 @@
           <div>
             <h4 class="font-medium">{{ article.title }}</h4>
             <p class="text-sm text-gray-600 mb-2 line-clamp-2 flex-grow">
-              {{ truncateText(article.content, 150) }}
-              <span v-if="(article.content || '').length > 50" class="text-gray-400">...</span>
+              {{ truncateText(article.content, 100) }}
+              <span v-if="(article.content || '').length > 100" class="text-gray-400">...</span>
             </p>
-            <p class="text-sm text-gray-500 mt-1">{{ formatArticleDate(article.publishedAt) }}</p>
+            <div class="flex items-center justify-between">
+              <p class="text-sm text-gray-500">{{ formatArticleDate(article.publishedAt) }}</p>
+              <NuxtLink :to="`/blog/${article.id}`" class="text-sm text-blue-600">Baca Selengkapnya</NuxtLink>
+            </div>
           </div>
         </div>
         <div v-if="latestArticles.length === 0" class="bg-white p-4 rounded-lg shadow text-center">
           <p class="text-gray-500">Belum ada artikel</p>
+        </div>
+        
+        <!-- "See More" button for loading additional articles -->
+        <div v-if="shouldShowLoadMore" class="text-center pt-2">
+          <button 
+            @click="refreshArticles" 
+            class="px-4 py-2 bg-blue-50 text-blue-600 rounded-md text-sm hover:bg-blue-100 transition-colors duration-300"
+          >
+            <span v-if="refreshingArticles">
+              <svg class="inline-block w-4 h-4 mr-1 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Memperbarui...
+            </span>
+            <span v-else>Perbarui Artikel</span>
+          </button>
         </div>
       </div>
     </div>
@@ -282,6 +307,7 @@ const {
   fetchPrayerTimes,
   updateNextPrayer,
   fetchLatestArticles,
+  refreshLatestArticles,
   initDashboard,
   
   // Helpers
@@ -289,11 +315,20 @@ const {
   formatArticleDate
 } = useUserDashboard();
 
-// State untuk modal pemilihan lokasi
-const showLocationSelector = ref(false);
+// State untuk modal pemilihan lokasi\
 const locationPermissionGranted = ref(false);
 
-const authStore = useAuthStore();
+// Add these new state variables
+const refreshingArticles = ref(false);
+const displayedArticles = computed(() => {
+  // Return only the first 3 articles
+  return latestArticles.value.slice(0, 3);
+});
+
+const shouldShowLoadMore = computed(() => {
+  // Show load more button if there are any articles
+  return latestArticles.value.length > 0;
+});
 
 // Current Date & Time
 const currentDate = new Date().toLocaleDateString('id-ID', { 
@@ -318,6 +353,25 @@ let timeInterval;
 // Store koordinat lokasi
 const latitude = ref(null);
 const longitude = ref(null);
+
+// Function to refresh/update articles without page reload
+const refreshArticles = async () => {
+  refreshingArticles.value = true;
+  try {
+    // Check if refreshLatestArticles exists before calling it
+    if (typeof refreshLatestArticles === 'function') {
+      await refreshLatestArticles();
+    } else {
+      // Fallback to fetchLatestArticles if refreshLatestArticles doesn't exist
+      console.warn('refreshLatestArticles is not available, using fetchLatestArticles instead');
+      await fetchLatestArticles();
+    }
+  } catch (error) {
+    console.error('Error refreshing articles:', error);
+  } finally {
+    refreshingArticles.value = false;
+  }
+};
 
 const truncateText = (text, maxLength) => {
   if (!text) return '';
@@ -534,10 +588,49 @@ onMounted(() => {
     console.warn('Geolocation memerlukan HTTPS. Aplikasi saat ini berjalan di ' + location.protocol);
     // Mungkin tambahkan peringatan untuk pengguna di sini
   }
+
+  // Aktifkan pembaruan otomatis setiap 5 menit (300000 ms)
+  // Komentar dibuka jika ingin mengaktifkan fitur ini
+  /*
+  autoRefreshInterval = setInterval(() => {
+    // Hanya refresh jika user tidak sedang interaksi dengan halaman
+    if (document.visibilityState === 'visible' && !refreshingArticles.value) {
+      console.log('Auto refreshing articles...');
+      refreshArticles();
+    }
+  }, 300000); // 5 menit
+  */
+  
+  // Tambahkan listener untuk visibility change agar tidak memperbarui
+  // saat tab tidak aktif
+  /*
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && autoRefreshInterval === null) {
+      // Restart interval jika tab menjadi visible lagi
+      autoRefreshInterval = setInterval(() => {
+        if (!refreshingArticles.value) {
+          refreshArticles();
+        }
+      }, 300000);
+    } else if (document.visibilityState === 'hidden' && autoRefreshInterval !== null) {
+      // Clear interval jika tab menjadi hidden
+      clearInterval(autoRefreshInterval);
+      autoRefreshInterval = null;
+    }
+  });
+  */
 });
 
 onUnmounted(() => {
   // Clear timer saat komponen di-unmount
   clearInterval(timeInterval);
+
+  // Clear auto refresh interval jika ada
+  /*
+  if (autoRefreshInterval) {
+    clearInterval(autoRefreshInterval);
+    autoRefreshInterval = null;
+  }
+  */
 });
 </script>
