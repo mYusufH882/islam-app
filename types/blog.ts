@@ -22,4 +22,5 @@ export interface Blog {
     };
     createdAt?: string;
     updatedAt?: string;
+    removeImage?: boolean;
 }

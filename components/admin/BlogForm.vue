@@ -457,7 +457,7 @@ function populateForm(blog: Blog) {
   isPublished.value = blog.status === 'published';
   
   if (blog.image) {
-    imagePreview.value = blog.image;
+    imagePreview.value = getImageUrl(blog.image) || blog.image;
   }
 }
 

@@ -233,19 +233,17 @@
               <tbody class="bg-white dark:bg-dark-bg-secondary divide-y divide-gray-200 dark:divide-gray-700">
                 <tr v-for="article in filteredArticles" :key="article.id" class="hover:bg-gray-50 dark:hover:bg-dark-bg-primary">
                   <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="flex items-center">
-                      <div class="flex-shrink-0 h-10 w-10 bg-blue-100 dark:bg-blue-900 rounded-md flex items-center justify-center">
-                        <svg class="h-6 w-6 text-blue-600 dark:text-blue-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div class="flex-shrink-0 h-10 w-10 bg-gray-100 dark:bg-gray-800 rounded-md overflow-hidden">
+                      <img 
+                        v-if="article.image" 
+                        :src="getImageUrl(article.image)" 
+                        :alt="article.title"
+                        class="h-full w-full object-cover" 
+                      />
+                      <div v-else class="h-full w-full flex items-center justify-center text-gray-400 dark:text-gray-500">
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
-                      </div>
-                      <div class="ml-4">
-                        <div class="text-sm font-medium text-gray-900 dark:text-white">
-                          {{ article.title }}
-                        </div>
-                        <div class="text-sm text-gray-500 dark:text-gray-400">
-                          {{ truncateText(article.description, 50) }}
-                        </div>
                       </div>
                     </div>
                   </td>
@@ -374,6 +372,7 @@ import { debounce } from 'lodash';
 import { useBlogStore } from '~/stores/blog.store';
 import { storeToRefs } from 'pinia';
 import { useApi } from '~/composables/useApi';
+import { getImageUrl } from '~/utils/imageHelper';
 
 // Define layout for this page
 definePageMeta({
@@ -493,6 +492,7 @@ const selectedCategory = computed({
 const filteredArticles = computed(() => {
   return blogs.value.map(blog => ({
     id: blog.id,
+    image: blog.image,
     title: blog.title,
     description: blog.content ? getExcerpt(blog.content) : '',
     category: blog.category?.name || 'Tidak ada kategori',
