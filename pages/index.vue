@@ -3,7 +3,9 @@
   <div>
     <!-- Greeting Card -->
     <div class="mb-6 bg-white p-4 rounded-lg shadow">
-      <h2 class="text-lg font-semibold">Assalamu'alaikum</h2>
+      <h2 class="text-lg font-semibold">
+        Assalamu'alaikum{{ authStore.isAuthenticated ? ', ' + getUserName() : ', Akhi/Ukhti' }}
+      </h2>
       <p class="text-gray-600">Selamat datang di Enterpreneur Muslim App</p>
       <div class="mt-2 flex items-center text-sm text-gray-500">
         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -303,7 +305,16 @@ import LoginPromptModal from '~/components/LoginPromptModal.vue';
 import BlogBookmarkIcon from '~/components/blog/BlogBookmarkIcon.vue';
 import { useBookmarkService } from '~/composables/useBookmarkService';
 
+// Auth store
+const authStore = useAuthStore();
 const route = useRoute();
+
+const getUserName = () => {
+  if (!authStore.user) return '';
+  
+  // Prioritaskan name jika ada, kalau tidak gunakan username
+  return authStore.user.name || authStore.user.username || '';
+};
 
 watch(() => route.path, (newPath) => {
   // Jika pengguna kembali ke homepage
@@ -337,8 +348,6 @@ const {
   formatArticleDate
 } = useUserDashboard();
 
-// Auth store
-const authStore = useAuthStore();
 // Bookmark service
 const bookmarkService = useBookmarkService();
 

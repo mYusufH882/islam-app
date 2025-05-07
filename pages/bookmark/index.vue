@@ -1,6 +1,15 @@
-// pages/bookmark/index.vue
 <template>
   <div>
+    <!-- Tombol Kembali -->
+    <div class="mb-4">
+      <NuxtLink to="/" class="inline-flex items-center text-blue-600">
+        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+        Kembali ke Beranda
+      </NuxtLink>
+    </div>
+    
     <!-- Pemberitahuan akses ditolak -->
     <div v-if="accessDenied" class="mb-6 bg-red-50 p-4 rounded-lg shadow-md">
       <div class="flex items-start">
