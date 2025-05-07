@@ -175,7 +175,6 @@
           <div class="flex justify-between">
             <h4 class="font-medium">{{ lastRead.surah.name }}</h4>
             <span class="text-sm text-gray-500">
-              <!-- Tampilkan ayat jika ada, jika tidak tampilkan halaman -->
               Ayat {{ lastRead.ayat }}
             </span>
           </div>
@@ -310,32 +309,9 @@ watch(() => route.path, (newPath) => {
   // Jika pengguna kembali ke homepage
   if (newPath === '/') {
     // Muat ulang data terakhir dibaca
-    loadLastRead();
+    useDashboardStore.refreshLastRead();
   }
 });
-
-const loadLastRead = () => {
-  if (process.client) {
-    const lastReadJson = localStorage.getItem('lastRead');
-    if (lastReadJson) {
-      try {
-        const lastReadData = JSON.parse(lastReadJson);
-        // Perbarui state lastRead dari dashboard store
-        userDashboard.lastRead = {
-          surah: {
-            number: lastReadData.surah,
-            name: lastReadData.name,
-            nameArab: lastReadData.nameArab || ''
-          },
-          ayat: lastReadData.ayat || lastReadData.page || 1,
-          timestamp: lastReadData.timestamp
-        };
-      } catch (error) {
-        console.error('Error loading last read data:', error);
-      }
-    }
-  }
-};
 
 // Menggunakan composable untuk mengakses state dan methods
 const {

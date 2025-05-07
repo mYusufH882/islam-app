@@ -454,7 +454,30 @@ export const useUserDashboardStore = defineStore('userDashboard', {
     },
 
     refreshLastRead() {
-      this.loadLastRead();
+      if (process.client) {
+        const lastReadJson = localStorage.getItem('lastRead');
+        if (lastReadJson) {
+          try {
+            // Parse data dari localStorage
+            const rawData = JSON.parse(lastReadJson);
+            
+            // Update state dengan data baru - PENTING untuk memicu reaktivitas
+            this.lastRead = {
+              surah: {
+                number: rawData.surah,
+                name: rawData.name,
+                nameArab: rawData.nameArab || ''
+              },
+              ayat: rawData.ayat || rawData.page || 1,
+              timestamp: rawData.timestamp
+            };
+            
+            console.log('Last read refreshed:', this.lastRead);
+          } catch (error) {
+            console.error('Error parsing last read data:', error);
+          }
+        }
+      }
     },
     
     // Dashboard initialization

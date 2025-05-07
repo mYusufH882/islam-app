@@ -272,7 +272,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router'; // Tambahkan import useRouter
+import { useRoute, useRouter } from 'vue-router';
 import { useQuranService } from '~/composables/useQuranService';
 import { useBookmarkService } from '~/composables/useBookmarkService';
 import BookmarkIcon from '~/components/quran/BookmarkIcon.vue';
@@ -332,7 +332,7 @@ interface SurahDetail {
 
 // Route dan parameter
 const route = useRoute();
-const router = useRouter(); // Inisialisasi useRouter di sini
+const router = useRouter();
 const surahId = ref<number>(parseInt(route.params.id as string));
 
 // State
@@ -347,9 +347,15 @@ const dashboardStore = useUserDashboardStore();
 const showScrollButtons = ref<boolean>(false);
 const scrollThreshold = ref<number>(300); // Show buttons after scrolling this many pixels
 
+const currentVisibleVerse = ref<number | null>(null);
+const lastSavedVerse = ref<number | null>(null);
+const saveTimeout = ref<number | null>(null);
+
+// Deklarasikan tipe variabel verseObserver dengan benar
+let verseObserver: IntersectionObserver | null = null;
+
 // Gunakan composable quran service
 const quranService = useQuranService();
-
 const bookmarkService = useBookmarkService();
 
 const isVerseBookmarked = (surahId: number, verseId: number): boolean => {
@@ -391,6 +397,82 @@ onBeforeRouteLeave((to, from, next) => {
   }
   next();
 });
+
+// Perbaikan fungsi setupVerseObserver untuk mengembalikan tipe yang benar
+const setupVerseObserver = (): IntersectionObserver | null => {
+  if (!process.client || !('IntersectionObserver' in window)) return null;
+  
+  // Konfigurasi observer
+  const options = {
+    root: null, // viewport
+    rootMargin: '0px',
+    threshold: 0.7 // elemen dianggap terlihat jika 70% area terlihat
+  };
+  
+  // Callback yang akan dipanggil saat ada perubahan visibilitas
+  const callback = (entries: IntersectionObserverEntry[]) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        // Dapatkan ID ayat dari elemen
+        const verseId = entry.target.id;
+        if (verseId && verseId.startsWith('ayat-')) {
+          const verseNumber = parseInt(verseId.replace('ayat-', ''));
+          if (!isNaN(verseNumber)) {
+            currentVisibleVerse.value = verseNumber;
+            
+            // Gunakan debouncing untuk mencegah penyimpanan terlalu sering
+            if (saveTimeout.value) {
+              clearTimeout(saveTimeout.value);
+            }
+            
+            // Perbaikan error - Tambahkan null check
+            saveTimeout.value = window.setTimeout(() => {
+              if (currentVisibleVerse.value !== null && currentVisibleVerse.value !== lastSavedVerse.value) {
+                saveLastReadWithVerse(currentVisibleVerse.value);
+                lastSavedVerse.value = currentVisibleVerse.value;
+              }
+            }, 2000); // tunggu 2 detik sebelum menyimpan
+          }
+        }
+      }
+    });
+  };
+  
+  // Buat observer
+  const observer = new IntersectionObserver(callback, options);
+  
+  // Daftarkan semua ayat ke observer
+  setTimeout(() => {
+    document.querySelectorAll('[id^="ayat-"]').forEach(verse => {
+      observer.observe(verse);
+    });
+  }, 1000); // Berikan waktu untuk rendering DOM
+  
+  // Simpan observer untuk dihapus saat komponen di-unmount
+  return observer;
+};
+
+const saveLastReadWithVerse = (verseNumber: number) => {
+  if (!surah.value?.number) return;
+  
+  const lastRead = {
+    surah: surah.value.number,
+    name: surah.value.name?.transliteration?.id || '',
+    nameArab: surah.value.name?.short || '',
+    ayat: verseNumber, // Pastikan menggunakan verseNumber yang benar
+    page: Math.ceil(verseNumber / versesPerPage.value), // Hitung halaman berdasarkan ayat
+    timestamp: new Date().toISOString()
+  };
+  
+  localStorage.setItem('lastRead', JSON.stringify(lastRead));
+  
+  // Jika menggunakan dashboard store, refresh data
+  if (dashboardStore) {
+    dashboardStore.refreshLastRead();
+  }
+  
+  console.log(`Terakhir dibaca diperbarui: Surah ${surah.value.number}, Ayat ${verseNumber}`);
+};
 
 // Computed properties
 const totalAyat = computed<number>(() => {
@@ -446,6 +528,18 @@ watch(() => route.params.id, () => {
   }
 });
 
+watch(() => paginatedVerses.value, () => {
+  // Reset observer saat ayat yang ditampilkan berubah
+  if (verseObserver) {
+    verseObserver.disconnect();
+  }
+  
+  // Beri waktu untuk DOM diperbarui
+  setTimeout(() => {
+    verseObserver = setupVerseObserver();
+  }, 500);
+}, { deep: true });
+
 // Fetch surah detail dengan composable update
 const fetchSurahDetail = async () => {
   loading.value = true;
@@ -468,7 +562,22 @@ const fetchSurahDetail = async () => {
       if (route.hash) {
         const ayatNumber = parseInt(route.hash.replace('#ayat-', ''));
         if (!isNaN(ayatNumber)) {
+          // Hitung halaman yang benar berdasarkan nomor ayat
           currentPage.value = Math.ceil(ayatNumber / versesPerPage.value);
+          
+          // Beri waktu untuk render dan kemudian scroll
+          setTimeout(() => {
+            const targetElement = document.getElementById(`ayat-${ayatNumber}`);
+            if (targetElement) {
+              targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              
+              // Highlight
+              targetElement.classList.add('bg-blue-50');
+              setTimeout(() => {
+                targetElement.classList.remove('bg-blue-50');
+              }, 3000);
+            }
+          }, 300);
         }
       }
       
@@ -632,6 +741,53 @@ const goToPage = (pageNumber: number) => {
 // Lifecycle
 onMounted(() => {
   fetchSurahDetail();
+
+  const scrollToTargetAyat = () => {
+    // Periksa apakah ada hash URL untuk ayat tertentu
+    if (route.hash) {
+      const ayatNumber = parseInt(route.hash.replace('#ayat-', ''));
+      if (!isNaN(ayatNumber)) {
+        // Hitung halaman di mana ayat ini berada
+        const targetPage = Math.ceil(ayatNumber / versesPerPage.value);
+        
+        // Jika halaman berbeda, ubah ke halaman yang benar dulu
+        if (currentPage.value !== targetPage) {
+          currentPage.value = targetPage;
+          
+          // Perlu delay untuk memastikan DOM diperbarui
+          setTimeout(() => {
+            const targetElement = document.getElementById(`ayat-${ayatNumber}`);
+            if (targetElement) {
+              // Scroll ke ayat dengan smooth effect
+              targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              
+              // Beri highlight sementara untuk menarik perhatian
+              targetElement.classList.add('bg-blue-50');
+              setTimeout(() => {
+                targetElement.classList.remove('bg-blue-50');
+              }, 3000); // Hapus highlight setelah 3 detik
+            }
+          }, 300); // Tunggu 300ms untuk DOM diperbarui
+        } else {
+          // Langsung scroll ke elemen ayat
+          const targetElement = document.getElementById(`ayat-${ayatNumber}`);
+          if (targetElement) {
+            // Scroll ke ayat dengan smooth effect
+            targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            
+            // Beri highlight sementara untuk menarik perhatian
+            targetElement.classList.add('bg-blue-50');
+            setTimeout(() => {
+              targetElement.classList.remove('bg-blue-50');
+            }, 3000); // Hapus highlight setelah 3 detik
+          }
+        }
+      }
+    }
+  };
+  
+  // Panggil fungsi scroll dengan delay
+  setTimeout(scrollToTargetAyat, 500);
   
   // Add scroll event listener for floating buttons
   window.addEventListener('scroll', handleScroll);
@@ -652,11 +808,23 @@ onMounted(() => {
       goToPage(currentPage.value + 1);
     }
   });
+
+  verseObserver = setupVerseObserver();
 });
 
 // Clean up event listeners when component is unmounted
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll);
+
+  // Bersihkan observer
+  if (verseObserver) {
+    verseObserver.disconnect();
+  }
+  
+  // Bersihkan timeout jika masih ada
+  if (saveTimeout.value) {
+    clearTimeout(saveTimeout.value);
+  }
 });
 
 // Helper untuk navigasi
