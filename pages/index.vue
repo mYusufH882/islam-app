@@ -48,7 +48,7 @@
         </div>
       </NuxtLink>
       
-      <NuxtLink to="/bookmark" class="bg-white p-4 rounded-lg shadow text-center hover:bg-gray-50">
+      <NuxtLink to="/bookmark" class="bg-white p-4 rounded-lg shadow text-center hover:bg-gray-50 relative">
         <div class="flex flex-col items-center">
           <div class="w-12 h-12 mb-2 bg-amber-100 rounded-full flex items-center justify-center">
             <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -56,6 +56,12 @@
             </svg>
           </div>
           <span class="font-medium">Bookmark</span>
+        </div>
+        
+        <!-- Add a badge showing total bookmarks if user has any -->
+        <div v-if="authStore.isAuthenticated && totalBookmarks > 0" 
+            class="absolute -top-1 -right-1 bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium">
+          {{ totalBookmarks }}
         </div>
       </NuxtLink>
     </div>
@@ -228,7 +234,7 @@
         </button>
       </div>
       <div v-else class="space-y-3">
-        <div v-for="article in displayedArticles" :key="article.id" class="bg-white p-3 rounded-lg shadow flex items-center space-x-3">
+        <div v-for="article in displayedArticles" :key="article.id" class="bg-white p-3 rounded-lg shadow flex items-center space-x-3 relative">
           <div class="w-16 h-16 bg-gray-200 rounded-md flex-shrink-0">
             <div class="w-16 h-16 flex-shrink-0 overflow-hidden bg-gray-200 rounded-md">
               <img 
@@ -244,7 +250,7 @@
               </div>
             </div>
           </div>
-          <div>
+          <div class="flex-1">
             <h4 class="font-medium">{{ article.title }}</h4>
             <p class="text-sm text-gray-600 mb-2 line-clamp-2 flex-grow">
               {{ truncateText(article.content, 100) }}
@@ -255,13 +261,25 @@
               <NuxtLink :to="`/blog/${article.id}`" class="text-sm text-blue-600">Baca Selengkapnya</NuxtLink>
             </div>
           </div>
+          
+          <!-- Add bookmark icon with absolute positioning -->
+          <div class="absolute top-2 right-2">
+            <BlogBookmarkIcon
+              :is-bookmarked="isBlogBookmarked(article.id)"
+              :blog-id="article.id"
+              :blog-title="article.title"
+              :blog-excerpt="article.excerpt || truncateText(article.content, 100)"
+              :blog-image="article.image"
+              @update:bookmark="handleBookmarkUpdate"
+            />
+          </div>
         </div>
         <div v-if="latestArticles.length === 0" class="bg-white p-4 rounded-lg shadow text-center">
           <p class="text-gray-500">Belum ada artikel</p>
         </div>
         
-        <!-- "See More" button for loading additional articles -->
-        <div v-if="shouldShowLoadMore" class="text-center pt-2">
+        <!-- Conditional "Update Articles" button -->
+        <div v-if="hasNewArticles" class="text-center pt-2">
           <button 
             @click="refreshArticles" 
             class="px-4 py-2 bg-blue-50 text-blue-600 rounded-md text-sm hover:bg-blue-100 transition-colors duration-300"
@@ -289,6 +307,8 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useUserDashboard } from '~/composables/useUserDashboard';
 import { useAuthStore } from '~/stores/auth';
 import LoginPromptModal from '~/components/LoginPromptModal.vue';
+import BlogBookmarkIcon from '~/components/blog/BlogBookmarkIcon.vue';
+import { useBookmarkService } from '~/composables/useBookmarkService';
 
 // Menggunakan composable untuk mengakses state dan methods
 const {
@@ -315,20 +335,63 @@ const {
   formatArticleDate
 } = useUserDashboard();
 
+// Auth store
+const authStore = useAuthStore();
+// Bookmark service
+const bookmarkService = useBookmarkService();
+
+// Computed property to get total bookmarks
+const totalBookmarks = computed(() => {
+  return bookmarkService.quranBookmarks.value.length + bookmarkService.blogBookmarks.value.length;
+});
+
 // State untuk modal pemilihan lokasi\
 const locationPermissionGranted = ref(false);
 
 // Add these new state variables
 const refreshingArticles = ref(false);
+const hasNewArticles = ref(false);
+const lastArticleTimestamp = ref('');
 const displayedArticles = computed(() => {
   // Return only the first 3 articles
   return latestArticles.value.slice(0, 3);
 });
 
-const shouldShowLoadMore = computed(() => {
-  // Show load more button if there are any articles
-  return latestArticles.value.length > 0;
-});
+const isBlogBookmarked = (blogId) => {
+  return bookmarkService.isBlogBookmarked(blogId);
+};
+
+const checkForNewArticles = async () => {
+  try {
+    // Gunakan store yang ada untuk mendapatkan artikel terbaru dari API
+    // Tetapi tidak memperbarui UI utama sampai pengguna meminta
+    const { apiFetch } = useApi();
+    
+    const { data } = await apiFetch('/blogs', {
+      params: {
+        limit: 1,
+        status: 'published',
+        sort: 'publishedAt:desc'
+      }
+    });
+    
+    if (data.value && data.value.success && data.value.data.blogs.length > 0) {
+      const newestArticle = data.value.data.blogs[0];
+      
+      // Jika kita sudah memiliki artikel dan ada artikel baru dengan timestamp lebih baru
+      if (latestArticles.value.length > 0 && 
+          newestArticle.publishedAt && 
+          lastArticleTimestamp.value && 
+          new Date(newestArticle.publishedAt) > new Date(lastArticleTimestamp.value)) {
+        hasNewArticles.value = true;
+      } else {
+        hasNewArticles.value = false;
+      }
+    }
+  } catch (error) {
+    console.error('Error checking for new articles:', error);
+  }
+};
 
 // Current Date & Time
 const currentDate = new Date().toLocaleDateString('id-ID', { 
@@ -357,14 +420,15 @@ const longitude = ref(null);
 // Function to refresh/update articles without page reload
 const refreshArticles = async () => {
   refreshingArticles.value = true;
+  hasNewArticles.value = false;
+  
   try {
-    // Check if refreshLatestArticles exists before calling it
-    if (typeof refreshLatestArticles === 'function') {
-      await refreshLatestArticles();
-    } else {
-      // Fallback to fetchLatestArticles if refreshLatestArticles doesn't exist
-      console.warn('refreshLatestArticles is not available, using fetchLatestArticles instead');
-      await fetchLatestArticles();
+    // Gunakan fungsi dari userDashboard store yang sudah ada
+    await refreshLatestArticles();
+    
+    // Update timestamp artikel terbaru
+    if (latestArticles.value.length > 0 && latestArticles.value[0].publishedAt) {
+      lastArticleTimestamp.value = latestArticles.value[0].publishedAt;
     }
   } catch (error) {
     console.error('Error refreshing articles:', error);
@@ -553,7 +617,7 @@ function showLocationEnableInstructions() {
 const locationInstructions = ref('');
 
 // Update waktu saat ini setiap detik
-onMounted(() => {
+onMounted(async () => {
   // Inisialisasi dashboard dari store
   initDashboard();
 
@@ -589,48 +653,39 @@ onMounted(() => {
     // Mungkin tambahkan peringatan untuk pengguna di sini
   }
 
-  // Aktifkan pembaruan otomatis setiap 5 menit (300000 ms)
-  // Komentar dibuka jika ingin mengaktifkan fitur ini
-  /*
-  autoRefreshInterval = setInterval(() => {
-    // Hanya refresh jika user tidak sedang interaksi dengan halaman
-    if (document.visibilityState === 'visible' && !refreshingArticles.value) {
-      console.log('Auto refreshing articles...');
-      refreshArticles();
-    }
-  }, 300000); // 5 menit
-  */
-  
-  // Tambahkan listener untuk visibility change agar tidak memperbarui
-  // saat tab tidak aktif
-  /*
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && autoRefreshInterval === null) {
-      // Restart interval jika tab menjadi visible lagi
-      autoRefreshInterval = setInterval(() => {
-        if (!refreshingArticles.value) {
-          refreshArticles();
-        }
-      }, 300000);
-    } else if (document.visibilityState === 'hidden' && autoRefreshInterval !== null) {
-      // Clear interval jika tab menjadi hidden
-      clearInterval(autoRefreshInterval);
-      autoRefreshInterval = null;
-    }
-  });
-  */
+  if (authStore.isAuthenticated) {
+    await bookmarkService.loadBookmarks();
+  }
+
+  if (latestArticles.value.length > 0 && latestArticles.value[0].publishedAt) {
+    lastArticleTimestamp.value = latestArticles.value[0].publishedAt;
+  }
+
+  if (process.client && 'setInterval' in window) {
+    const checkInterval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        checkForNewArticles();
+      }
+    }, 300000); // 5 menit
+    
+    // Juga periksa ketika tab menjadi aktif lagi
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        checkForNewArticles();
+      }
+    });
+    
+    // Clean up interval when component is unmounted
+    onUnmounted(() => {
+      clearInterval(checkInterval);
+    });
+  }
 });
 
 onUnmounted(() => {
   // Clear timer saat komponen di-unmount
   clearInterval(timeInterval);
 
-  // Clear auto refresh interval jika ada
-  /*
-  if (autoRefreshInterval) {
-    clearInterval(autoRefreshInterval);
-    autoRefreshInterval = null;
-  }
-  */
+  
 });
 </script>
