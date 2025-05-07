@@ -26,9 +26,9 @@
               <ul class="list-disc pl-5 space-y-1">
                 <li>Menyimpan bookmark ayat Al-Quran</li>
                 <li>Melanjutkan bacaan terakhir Al-Quran</li>
-                <li>Jadwal sholat sesuai lokasi Anda</li>
+                <!-- <li>Jadwal sholat sesuai lokasi Anda</li>
                 <li>Notifikasi waktu sholat</li>
-                <li>Akses ke semua artikel islami</li>
+                <li>Akses ke semua artikel islami</li> -->
               </ul>
             </div>
           </div>
