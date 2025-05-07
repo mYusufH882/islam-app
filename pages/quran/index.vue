@@ -16,7 +16,7 @@
           class="w-full p-3 bg-white rounded-lg shadow pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <div class="absolute left-3 top-3 text-gray-400">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></svg>
         </div>
       </div>
     </div>
@@ -48,7 +48,15 @@
             <div class="flex-grow">
               <div class="flex justify-between">
                 <h3 class="font-medium">{{ surah.name.transliteration.id }}</h3>
-                <span class="text-right font-arabic text-lg">{{ surah.name.short }}</span>
+                <div class="flex items-center">
+                  <!-- Add bookmark indicator if surah has bookmarks -->
+                  <span v-if="hasSurahBookmarks(surah.number)" class="mr-2 text-blue-600">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"/>
+                    </svg>
+                  </span>
+                  <span class="text-right font-arabic text-lg">{{ surah.name.short }}</span>
+                </div>
               </div>
               <div class="flex justify-between mt-1">
                 <p class="text-gray-500 text-sm">{{ surah.revelation.id }} • {{ surah.numberOfVerses }} Ayat</p>
@@ -150,6 +158,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
 import { useQuranService } from '~/composables/useQuranService';
+import { useBookmarkService } from '~/composables/useBookmarkService';
 
 // Definisikan tipe untuk Surah
 interface Surah {
@@ -195,6 +204,14 @@ const filteredSurahs = computed<Surah[]>(() => {
 const totalPages = computed<number>(() => {
   return Math.ceil(filteredSurahs.value.length / pageSize.value) || 1;
 });
+
+// Inside setup
+const bookmarkService = useBookmarkService();
+
+// Add this method
+const hasSurahBookmarks = (surahId: number): boolean => {
+  return bookmarkService.isBookmarked(surahId);
+};
 
 const paginatedSurahs = computed<Surah[]>(() => {
   const startIndex = (currentPage.value - 1) * pageSize.value;

@@ -1,21 +1,23 @@
+// composables/useLoginModal.ts
 import { useState } from '#app';
 
 export function useLoginModal() {
-  // State untuk modal login
+  // State for modal login
   const showLoginModal = useState('showLoginModal', () => false);
   
-  // State untuk menyimpan URL redirect setelah login
+  // State for storing URL redirect after login
   const redirectPath = useState('loginRedirectPath', () => '');
   
-  // Fungsi untuk menampilkan modal
+  // Function to display modal
   const openLoginModal = (redirect = '') => {
+    console.log('Opening login modal with redirect path:', redirect); // Add debugging
     showLoginModal.value = true;
     if (redirect) {
       redirectPath.value = redirect;
     }
   };
   
-  // Fungsi untuk menutup modal
+  // Function to close modal
   const closeLoginModal = () => {
     showLoginModal.value = false;
   };
