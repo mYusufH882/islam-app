@@ -284,15 +284,56 @@ export const useUserDashboardStore = defineStore('userDashboard', {
     // Quran actions
     loadLastRead() {
       if (process.client) {
-        const lastReadJson = localStorage.getItem('quran_lastRead');
+        const lastReadJson = localStorage.getItem('lastRead');
         if (lastReadJson) {
           try {
-            this.lastRead = JSON.parse(lastReadJson);
+            // Parse data dari localStorage
+            const rawData = JSON.parse(lastReadJson);
+            
+            // Transform data ke format yang diharapkan
+            this.lastRead = {
+              surah: {
+                number: rawData.surah,
+                name: rawData.name,
+                nameArab: rawData.nameArab || '' // Tambahkan default jika tidak ada
+              },
+              ayat: rawData.page || 1, // Menggunakan page sebagai ayat jika tidak ada ayat
+              timestamp: rawData.timestamp
+            };
           } catch (error) {
             console.error('Error parsing last read data:', error);
             this.lastRead = null;
           }
         }
+      }
+    },
+
+    async fetchUserLastRead() {
+      if (!useAuthStore().isAuthenticated) return;
+      
+      try {
+        const { apiFetch } = useApi();
+        const { data } = await apiFetch('/user/last-read');
+        
+        if (data.value && data.value.success && data.value.data) {
+          // Jika ada data dari API, gunakan data tersebut
+          this.lastRead = {
+            surah: {
+              number: data.value.data.surahNumber,
+              name: data.value.data.surahName,
+              nameArab: data.value.data.surahNameArab || ''
+            },
+            ayat: data.value.data.ayatNumber,
+            timestamp: data.value.data.timestamp
+          };
+        } else {
+          // Jika tidak ada data dari API, gunakan localStorage sebagai fallback
+          this.loadLastRead();
+        }
+      } catch (error) {
+        console.error('Error fetching user last read:', error);
+        // Tetap gunakan localStorage sebagai fallback
+        this.loadLastRead();
       }
     },
     
@@ -411,10 +452,14 @@ export const useUserDashboardStore = defineStore('userDashboard', {
         this.articlesError = 'Gagal memperbarui artikel terbaru.';
       }
     },
+
+    refreshLastRead() {
+      this.loadLastRead();
+    },
     
     // Dashboard initialization
-    async initDashboard() {
-      if (this.dashboardInitialized) return;
+    async initDashboard(forceRefresh = false) {
+      if (this.dashboardInitialized && !forceRefresh) return;
       
       // Load data from localStorage first (instant)
       this.loadLastRead();
@@ -433,7 +478,8 @@ export const useUserDashboardStore = defineStore('userDashboard', {
       // Fetch data from API in parallel
       await Promise.allSettled([
         this.fetchPrayerTimes(),
-        this.fetchLatestArticles()
+        this.fetchLatestArticles(),
+        this.fetchUserLastRead()
       ]);
       
       this.dashboardInitialized = true;

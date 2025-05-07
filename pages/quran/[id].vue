@@ -276,6 +276,7 @@ import { useRoute, useRouter } from 'vue-router'; // Tambahkan import useRouter
 import { useQuranService } from '~/composables/useQuranService';
 import { useBookmarkService } from '~/composables/useBookmarkService';
 import BookmarkIcon from '~/components/quran/BookmarkIcon.vue';
+import { useUserDashboardStore } from '~/stores/user-dashboard.store';
 
 interface BookmarkEvent {
   surahId: number;
@@ -340,10 +341,9 @@ const loading = ref<boolean>(true);
 const error = ref<string | null>(null);
 const currentPage = ref<number>(1);
 const versesPerPage = ref<number>(10); // Default 10 ayat per page
-const businessInsights = ref<Record<number, string>>({});
 const prevSurahName = ref<string>('');
 const nextSurahName = ref<string>('');
-
+const dashboardStore = useUserDashboardStore();
 const showScrollButtons = ref<boolean>(false);
 const scrollThreshold = ref<number>(300); // Show buttons after scrolling this many pixels
 
@@ -353,13 +353,14 @@ const quranService = useQuranService();
 const bookmarkService = useBookmarkService();
 
 const isVerseBookmarked = (surahId: number, verseId: number): boolean => {
-  return bookmarkService.isBookmarked(surahId, verseId);
+  return bookmarkService.isQuranBookmarked(surahId, verseId);
 };
 
 const handleBookmarkUpdate = async (event: BookmarkEvent, verse: Verse): Promise<void> => {
   try {
     if (event.action === 'add') {
       await bookmarkService.addBookmark({
+        type: 'quran', // Tambahkan ini
         surahId: event.surahId,
         verseId: event.verseId,
         surahName: surah.value.name?.transliteration?.id || '',
@@ -371,10 +372,7 @@ const handleBookmarkUpdate = async (event: BookmarkEvent, verse: Verse): Promise
       // Show success message
       alert('Ayat berhasil ditambahkan ke bookmark');
     } else {
-      await bookmarkService.removeBookmark({
-        surahId: event.surahId,
-        verseId: event.verseId
-      });
+      await bookmarkService.removeBookmark(`quran:${event.surahId}:${event.verseId}`);
       
       // Show success message
       alert('Ayat berhasil dihapus dari bookmark');
@@ -384,6 +382,15 @@ const handleBookmarkUpdate = async (event: BookmarkEvent, verse: Verse): Promise
     alert('Gagal memperbarui bookmark. Silakan coba lagi.');
   }
 };
+
+onBeforeRouteLeave((to, from, next) => {
+  // Jika navigasi ke homepage
+  if (to.path === '/') {
+    // Refresh last read data di store
+    dashboardStore.refreshLastRead();
+  }
+  next();
+});
 
 // Computed properties
 const totalAyat = computed<number>(() => {
@@ -454,9 +461,6 @@ const fetchSurahDetail = async () => {
     if (data) {
       surah.value = data;
       
-      // Load business insights setelah surah dimuat
-      loadBusinessInsights();
-      
       // Save last read position
       saveLastRead();
       
@@ -507,76 +511,37 @@ const fetchAdjacentSurahNames = async () => {
   }
 };
 
-// Load business insights (contoh implementasi)
-const loadBusinessInsights = () => {
-  // Ini hanya contoh implementasi, bisa disesuaikan dengan kebutuhan
-  // Di aplikasi nyata, mungkin data ini berasal dari API atau database
-  businessInsights.value = {
-    // Contoh insight bisnis untuk ayat tertentu
-    1: "Memulai bisnis dengan bismillah adalah kunci keberhasilan seorang entrepreneur muslim.",
-    5: "Prinsip transparansi dan kejujuran dalam bisnis sangat ditekankan dalam Islam.",
-    10: "Keseimbangan antara mencari keuntungan dan beribadah adalah filosofi penting dalam bisnis Islam."
-  };
-};
-
-// Cek apakah ada business insight untuk ayat tertentu
-const hasBusinessInsight = (ayatNumber: number): boolean => {
-  return !!businessInsights.value[ayatNumber];
-};
-
-// Ambil business insight untuk ayat tertentu
-const getBusinessInsight = (ayatNumber: number): string => {
-  return businessInsights.value[ayatNumber] || '';
-};
-
 // Simpan posisi terakhir membaca
 const saveLastRead = () => {
   if (!surah.value?.number) return;
   
+  // Format yang konsisten dengan yang diharapkan dashboard
   const lastRead = {
     surah: surah.value.number,
     name: surah.value.name?.transliteration?.id || '',
+    nameArab: surah.value.name?.short || '',
+    ayat: getCurrentAyat(), // Fungsi untuk mendapatkan ayat saat ini
     page: currentPage.value,
     timestamp: new Date().toISOString()
   };
   
   localStorage.setItem('lastRead', JSON.stringify(lastRead));
+  
+  // Jika menggunakan dashboard store
+  if (dashboardStore) {
+    dashboardStore.refreshLastRead();
+  }
 };
 
-// Fungsi bookmark ayat
-const bookmarkVerse = (verse: Verse) => {
-  if (!surah.value?.number) return;
-  
-  const bookmark = {
-    surah: surah.value.number,
-    surahName: surah.value.name?.transliteration?.id || '',
-    ayat: verse.number.inSurah,
-    text: verse.text.arab,
-    translation: verse.translation.id,
-    timestamp: new Date().toISOString()
-  };
-  
-  // Ambil bookmark yang sudah ada
-  const bookmarksJson = localStorage.getItem('quranBookmarks') || '[]';
-  const bookmarks = JSON.parse(bookmarksJson);
-  
-  // Cek apakah sudah ada bookmark untuk ayat ini
-  const existingIndex = bookmarks.findIndex((b: any) => 
-    b.surah === bookmark.surah && b.ayat === bookmark.ayat
-  );
-  
-  // Jika sudah ada, hapus bookmark tersebut
-  if (existingIndex >= 0) {
-    bookmarks.splice(existingIndex, 1);
-    alert('Bookmark telah dihapus');
-  } else {
-    // Jika belum ada, tambahkan bookmark baru
-    bookmarks.push(bookmark);
-    alert('Ayat telah ditambahkan ke bookmark');
+const getCurrentAyat = () => {
+  if (route.hash) {
+    const match = route.hash.match(/#ayat-(\d+)/);
+    if (match && match[1]) {
+      return parseInt(match[1]);
+    }
   }
-  
-  // Simpan bookmark yang sudah diupdate
-  localStorage.setItem('quranBookmarks', JSON.stringify(bookmarks));
+  // Default ke ayat pertama pada halaman saat ini
+  return ((currentPage.value - 1) * versesPerPage.value) + 1;
 };
 
 // Fungsi share ayat

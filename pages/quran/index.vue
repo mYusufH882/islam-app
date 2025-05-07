@@ -210,7 +210,7 @@ const bookmarkService = useBookmarkService();
 
 // Add this method
 const hasSurahBookmarks = (surahId: number): boolean => {
-  return bookmarkService.isBookmarked(surahId);
+  return bookmarkService.isQuranBookmarked(surahId);
 };
 
 const paginatedSurahs = computed<Surah[]>(() => {
