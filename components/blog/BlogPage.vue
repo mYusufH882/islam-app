@@ -6,6 +6,13 @@
       <p class="text-gray-600">Artikel dan tulisan inspiratif islami</p>
     </div>
 
+    <!-- Bookmark notification message -->
+    <div v-if="showBookmarkMessage" 
+         class="fixed top-20 right-4 bg-blue-600 text-white py-2 px-4 rounded-lg shadow-lg z-50 transition-opacity duration-300"
+         :class="{'opacity-100': showBookmarkMessage, 'opacity-0': !showBookmarkMessage}">
+      {{ bookmarkMessage }}
+    </div>
+
     <!-- Search Bar -->
     <div class="mb-6 w-full">
       <div class="relative w-full">
@@ -51,7 +58,26 @@
 
     <!-- Featured Article Card with Short Description -->
     <div v-if="featuredArticle" class="mb-6 w-full">
-      <div class="bg-white rounded-lg shadow overflow-hidden w-full">
+      <div class="bg-white rounded-lg shadow overflow-hidden w-full relative">
+        <!-- Featured Badge -->
+        <div class="absolute top-3 left-3 z-10">
+          <span class="px-2 py-1 bg-amber-500 text-white text-xs font-medium rounded-full">
+            Pilihan Editor
+          </span>
+        </div>
+
+        <!-- Bookmark Icon -->
+        <div class="absolute top-3 right-3 z-10">
+          <BlogBookmarkIcon
+            :is-bookmarked="isBlogBookmarked(featuredArticle.id)"
+            :blog-id="featuredArticle.id"
+            :blog-title="featuredArticle.title"
+            :blog-excerpt="featuredArticle.excerpt || truncateText(featuredArticle.content, 100)"
+            :blog-image="featuredArticle.image"
+            @update:bookmark="handleBookmarkUpdate"
+          />
+        </div>
+
         <div class="h-56 bg-gray-200 w-full">
           <img 
             v-if="featuredArticle.image" 
@@ -91,47 +117,14 @@
     </div>
 
     <!-- Regular Article Cards with Short Description -->
-    <div class="grid grid-cols-1 md:grid-cols-1 gap-4 w-full">
-      <div 
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <BlogCard 
         v-for="article in filteredArticles" 
         :key="article.id"
-        class="bg-white rounded-lg shadow overflow-hidden w-full"
-      >
-        <div class="flex h-full w-full">
-          <div class="w-24 h-auto flex-shrink-0 bg-gray-200">
-            <img 
-              v-if="article.image" 
-              :src="getImageUrl(article.image)" 
-              alt="Thumbnail" 
-              class="w-full h-full object-cover"
-            />
-            <div v-else class="w-full h-full flex items-center justify-center">
-              <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
-          </div>
-          <div class="p-4 flex-1 flex flex-col w-full">
-            <div class="flex items-center mb-1">
-              <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                {{ getCategoryName(article.categoryId) }}
-              </span>
-              <span class="ml-2 text-xs text-gray-500">
-                {{ formatDate(article.publishedAt || article.date) }}
-              </span>
-            </div>
-            <h3 class="font-medium mb-1">{{ article.title }}</h3>
-            
-            <!-- Truncated Content Description (max 50 chars) -->
-            <p class="text-sm text-gray-600 mb-2 line-clamp-2 flex-grow">
-              {{ truncateText(article.content, 50) }}
-              <span v-if="(article.content || '').length > 50" class="text-gray-400">...</span>
-            </p>
-            
-            <NuxtLink :to="`/blog/${article.id}`" class="text-sm text-blue-600 self-start mt-auto">Baca selengkapnya</NuxtLink>
-          </div>
-        </div>
-      </div>
+        :blog="article"
+        :categories="categories"
+        @bookmark-updated="handleBookmarkUpdate"
+      />
     </div>
 
     <!-- Empty State -->
@@ -162,6 +155,9 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { useBlogStore } from '~/stores/blog.store';
 import { storeToRefs } from 'pinia';
 import { getImageUrl } from '~/utils/imageHelper';
+import { useBookmarkService } from '~/composables/useBookmarkService';
+import BlogCard from '~/components/blog/BlogCard.vue';
+import BlogBookmarkIcon from '~/components/blog/BlogBookmarkIcon.vue';
 
 // Initialize blog store
 const blogStore = useBlogStore();
@@ -174,6 +170,11 @@ const {
   error,
   pagination
 } = storeToRefs(blogStore);
+
+// Bookmark service
+const bookmarkService = useBookmarkService();
+const bookmarkMessage = ref('');
+const showBookmarkMessage = ref(false);
 
 // Local state
 const searchQuery = ref('');
@@ -276,6 +277,28 @@ const getCategoryName = (categoryId) => {
   return category ? category.name : 'Umum';
 };
 
+// Check if blog is bookmarked
+const isBlogBookmarked = (blogId) => {
+  return bookmarkService.isBlogBookmarked(blogId);
+};
+
+// Handle bookmark updates
+const handleBookmarkUpdate = (event) => {
+  if (event.action === 'add') {
+    bookmarkMessage.value = 'Artikel berhasil ditambahkan ke bookmark';
+  } else {
+    bookmarkMessage.value = 'Artikel berhasil dihapus dari bookmark';
+  }
+  
+  // Show message
+  showBookmarkMessage.value = true;
+  
+  // Hide message after 3 seconds
+  setTimeout(() => {
+    showBookmarkMessage.value = false;
+  }, 3000);
+};
+
 // Reset pagination when filters change
 watch([searchQuery, selectedCategory], () => {
   currentPage.value = 1;
@@ -285,6 +308,9 @@ watch([searchQuery, selectedCategory], () => {
 onMounted(async () => {
   // Set status filter to only show published blogs
   blogStore.setStatusFilter('published');
+  
+  // Load bookmarks
+  await bookmarkService.loadBookmarks();
   
   // Fetch data if not already loaded
   if (blogs.value.length === 0) {

@@ -394,10 +394,10 @@ export const useUserDashboardStore = defineStore('userDashboard', {
         
         const { data } = await apiFetch('/blogs', {
           params: {
-            limit: 3,
+            limit: 4,
             status: 'published',
             sort: 'publishedAt:desc',
-            forceRefresh: true // Add a parameter to bypass any caching
+            forceRefresh: true // Parameter untuk melewati cache
           }
         });
         

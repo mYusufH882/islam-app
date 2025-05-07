@@ -1,30 +1,4 @@
-<script setup>
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { useAuthStore } from '~/stores/auth';
-import BookmarkList from '~/components/quran/BookmarkList.vue';
-
-const router = useRouter();
-const authStore = useAuthStore();
-const activeTab = ref('quran');
-
-// State untuk mengontrol pemberitahuan akses ditolak
-const accessDenied = ref(false);
-
-// Periksa autentikasi pada mounting komponen
-onMounted(() => {
-  // Jika pengguna belum login, tampilkan pemberitahuan
-  if (!authStore.isAuthenticated) {
-    accessDenied.value = true;
-  }
-});
-
-// Fungsi untuk melakukan redirect manual
-const goToLogin = () => {
-  router.push('/auth/login?redirect=/bookmark');
-};
-</script>
-
+// pages/bookmark/index.vue
 <template>
   <div>
     <!-- Pemberitahuan akses ditolak -->
@@ -58,10 +32,91 @@ const goToLogin = () => {
         <p class="text-gray-600">Ayat dan artikel yang Anda tandai</p>
       </div>
 
-      <!-- Quran Bookmarks Section -->
-      <div class="mb-6">
-        <BookmarkList />
+      <!-- Filter Tab -->
+      <div class="mb-6 bg-white rounded-lg shadow overflow-hidden">
+        <div class="flex border-b border-gray-200">
+          <button 
+            @click="activeTab = 'quran'" 
+            class="flex-1 py-3 px-4 text-center font-medium transition-colors duration-200"
+            :class="activeTab === 'quran' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-blue-500'"
+          >
+            Al-Quran
+          </button>
+          <button 
+            @click="activeTab = 'blog'" 
+            class="flex-1 py-3 px-4 text-center font-medium transition-colors duration-200"
+            :class="activeTab === 'blog' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-blue-500'"
+          >
+            Blog
+          </button>
+        </div>
+      </div>
+
+      <!-- Bookmark Content based on active tab -->
+      <div v-if="activeTab === 'quran'">
+        <BookmarkList 
+          :bookmarks="quranBookmarks" 
+          @remove-bookmark="removeQuranBookmark"
+        />
+      </div>
+      
+      <div v-else-if="activeTab === 'blog'">
+        <BlogBookmarkList 
+          :bookmarks="blogBookmarks" 
+          @remove-bookmark="removeBlogBookmark"
+        />
       </div>
     </div>
   </div>
 </template>
+
+<script setup>
+import { ref, onMounted, computed } from 'vue';
+import { useRouter } from 'vue-router';
+import { useAuthStore } from '~/stores/auth';
+import { useBookmarkService } from '~/composables/useBookmarkService';
+import BookmarkList from '~/components/quran/BookmarkList.vue';
+import BlogBookmarkList from '~/components/blog/BlogBookmarkList.vue';
+
+const router = useRouter();
+const authStore = useAuthStore();
+const bookmarkService = useBookmarkService();
+const activeTab = ref('quran');
+
+// State untuk mengontrol pemberitahuan akses ditolak
+const accessDenied = ref(false);
+
+// Computed properties to get bookmarks by type
+const quranBookmarks = computed(() => {
+  return bookmarkService.quranBookmarks.value;
+});
+
+const blogBookmarks = computed(() => {
+  return bookmarkService.blogBookmarks.value;
+});
+
+// Periksa autentikasi pada mounting komponen
+onMounted(async () => {
+  // Jika pengguna belum login, tampilkan pemberitahuan
+  if (!authStore.isAuthenticated) {
+    accessDenied.value = true;
+  } else {
+    // Load bookmarks
+    await bookmarkService.loadBookmarks();
+  }
+});
+
+// Fungsi untuk melakukan redirect manual
+const goToLogin = () => {
+  router.push('/auth/login?redirect=/bookmark');
+};
+
+// Handle removing bookmarks
+const removeQuranBookmark = async (bookmark) => {
+  await bookmarkService.removeBookmark(bookmark.id);
+};
+
+const removeBlogBookmark = async (bookmark) => {
+  await bookmarkService.removeBookmark(bookmark.id);
+};
+</script>
