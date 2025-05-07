@@ -170,31 +170,24 @@
         <NuxtLink to="/quran" class="text-sm text-blue-600">Buka Al-Quran</NuxtLink>
       </div>
       <!-- Skeleton loader untuk Terakhir Dibaca -->
-      <div v-if="loadingQuran" class="bg-white p-4 rounded-lg shadow">
-        <div class="mb-2">
-          <div class="flex justify-between">
-            <div class="h-5 bg-gray-200 rounded animate-pulse w-24"></div>
-            <div class="h-5 bg-gray-200 rounded animate-pulse w-16"></div>
-          </div>
-          <div class="h-4 bg-gray-200 rounded animate-pulse w-20 mt-1"></div>
-        </div>
-        <div class="mt-3 text-right">
-          <div class="h-7 bg-gray-200 rounded animate-pulse w-32 ml-auto"></div>
-        </div>
-        <div class="mt-3 h-10 bg-gray-200 rounded animate-pulse w-full"></div>
-      </div>
-      <div v-else-if="lastRead" class="bg-white p-4 rounded-lg shadow">
+      <div v-if="lastRead" class="bg-white p-4 rounded-lg shadow">
         <div class="mb-2">
           <div class="flex justify-between">
             <h4 class="font-medium">{{ lastRead.surah.name }}</h4>
-            <span class="text-sm text-gray-500">Ayat {{ lastRead.ayat }}</span>
+            <span class="text-sm text-gray-500">
+              <!-- Tampilkan ayat jika ada, jika tidak tampilkan halaman -->
+              Ayat {{ lastRead.ayat }}
+            </span>
           </div>
           <p class="text-sm text-gray-500">{{ formatLastReadTime(lastRead.timestamp) }}</p>
         </div>
         <div class="mt-3 text-right">
           <p class="text-lg leading-relaxed font-arabic">{{ lastRead.surah.nameArab }}</p>
         </div>
-        <NuxtLink :to="`/quran/${lastRead.surah.number}#ayat-${lastRead.ayat}`" class="mt-3 block w-full py-2 bg-blue-600 text-white rounded-md text-sm font-medium text-center">
+        <NuxtLink 
+          :to="`/quran/${lastRead.surah.number}#ayat-${lastRead.ayat}`" 
+          class="mt-3 block w-full py-2 bg-blue-600 text-white rounded-md text-sm font-medium text-center"
+        >
           Lanjutkan Membaca
         </NuxtLink>
       </div>
@@ -303,12 +296,46 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { useRoute } from 'vue-router';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useUserDashboard } from '~/composables/useUserDashboard';
 import { useAuthStore } from '~/stores/auth';
 import LoginPromptModal from '~/components/LoginPromptModal.vue';
 import BlogBookmarkIcon from '~/components/blog/BlogBookmarkIcon.vue';
 import { useBookmarkService } from '~/composables/useBookmarkService';
+
+const route = useRoute();
+
+watch(() => route.path, (newPath) => {
+  // Jika pengguna kembali ke homepage
+  if (newPath === '/') {
+    // Muat ulang data terakhir dibaca
+    loadLastRead();
+  }
+});
+
+const loadLastRead = () => {
+  if (process.client) {
+    const lastReadJson = localStorage.getItem('lastRead');
+    if (lastReadJson) {
+      try {
+        const lastReadData = JSON.parse(lastReadJson);
+        // Perbarui state lastRead dari dashboard store
+        userDashboard.lastRead = {
+          surah: {
+            number: lastReadData.surah,
+            name: lastReadData.name,
+            nameArab: lastReadData.nameArab || ''
+          },
+          ayat: lastReadData.ayat || lastReadData.page || 1,
+          timestamp: lastReadData.timestamp
+        };
+      } catch (error) {
+        console.error('Error loading last read data:', error);
+      }
+    }
+  }
+};
 
 // Menggunakan composable untuk mengakses state dan methods
 const {
@@ -318,7 +345,6 @@ const {
   loadingPrayer,
   prayerError,
   lastRead,
-  loadingQuran,
   latestArticles,
   loadingArticles,
   articlesError,
