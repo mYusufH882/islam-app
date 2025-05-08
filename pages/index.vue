@@ -426,30 +426,80 @@ const handleBookmarkUpdate = async ({ blogId, action }) => {
 
 const checkForNewArticles = async () => {
   try {
-    // Gunakan store yang ada untuk mendapatkan artikel terbaru dari API
-    // Tetapi tidak memperbarui UI utama sampai pengguna meminta
+    // Gunakan flag forceRefresh untuk melewati cache
     const { apiFetch } = useApi();
     
+    // Ambil semua artikel yang dipublikasikan
     const { data } = await apiFetch('/blogs', {
       params: {
-        limit: 1,
+        limit: 10, // Ambil lebih banyak artikel untuk perbandingan yang akurat
         status: 'published',
-        sort: 'publishedAt:desc'
+        sort: 'publishedAt:desc',
+        forceRefresh: true // Parameter untuk melewati cache
       }
     });
     
-    if (data.value && data.value.success && data.value.data.blogs.length > 0) {
-      const newestArticle = data.value.data.blogs[0];
+    if (data.value && data.value.success) {
+      const apiArticles = data.value.data.blogs;
       
-      // Jika kita sudah memiliki artikel dan ada artikel baru dengan timestamp lebih baru
-      if (latestArticles.value.length > 0 && 
-          newestArticle.publishedAt && 
-          lastArticleTimestamp.value && 
-          new Date(newestArticle.publishedAt) > new Date(lastArticleTimestamp.value)) {
+      // KASUS 1: Tidak ada artikel saat ini, tapi API mengembalikan artikel
+      if (latestArticles.value.length === 0 && apiArticles.length > 0) {
+        console.log('Kasus 1: Artikel baru ditemukan saat tidak ada artikel sebelumnya');
         hasNewArticles.value = true;
-      } else {
-        hasNewArticles.value = false;
+        return;
       }
+      
+      // KASUS 2: Jumlah artikel berubah (artikel ditambah atau dihapus)
+      if (latestArticles.value.length !== apiArticles.length) {
+        console.log('Kasus 2: Jumlah artikel berubah', 
+                    'UI:', latestArticles.value.length, 
+                    'API:', apiArticles.length);
+        hasNewArticles.value = true;
+        return;
+      }
+      
+      // KASUS 3: Bandingkan ID artikel saat ini dengan yang dari API
+      // Buat array dari ID artikel yang ditampilkan saat ini
+      const currentIds = latestArticles.value.map(article => article.id).sort();
+      // Buat array dari ID artikel dari API
+      const apiIds = apiArticles.map(article => article.id).sort();
+      
+      // Bandingkan array ID (harus sama persis untuk tidak ada perubahan)
+      const idsMatch = currentIds.length === apiIds.length && 
+                       currentIds.every((id, index) => id === apiIds[index]);
+      
+      if (!idsMatch) {
+        console.log('Kasus 3: ID artikel tidak cocok');
+        hasNewArticles.value = true;
+        return;
+      }
+      
+      // KASUS 4: Artikel memiliki ID yang sama tetapi kontennya berubah
+      for (const apiArticle of apiArticles) {
+        const displayedArticle = latestArticles.value.find(article => article.id === apiArticle.id);
+        
+        if (displayedArticle) {
+          // Bandingkan timestamp update
+          if (apiArticle.updatedAt && displayedArticle.updatedAt &&
+              new Date(apiArticle.updatedAt) > new Date(displayedArticle.updatedAt)) {
+            console.log('Kasus 4: Artikel diupdate', apiArticle.id);
+            hasNewArticles.value = true;
+            return;
+          }
+          
+          // Periksa juga jika judul atau konten berubah
+          if (apiArticle.title !== displayedArticle.title || 
+              apiArticle.content !== displayedArticle.content) {
+            console.log('Kasus 4: Judul atau konten berubah', apiArticle.id);
+            hasNewArticles.value = true;
+            return;
+          }
+        }
+      }
+      
+      // Jika tidak ada perubahan terdeteksi
+      console.log('Tidak ada perubahan terdeteksi');
+      hasNewArticles.value = false;
     }
   } catch (error) {
     console.error('Error checking for new articles:', error);
@@ -483,16 +533,23 @@ const longitude = ref(null);
 // Function to refresh/update articles without page reload
 const refreshArticles = async () => {
   refreshingArticles.value = true;
-  hasNewArticles.value = false;
   
   try {
     // Gunakan fungsi dari userDashboard store yang sudah ada
     await refreshLatestArticles();
     
+    // Reset status hasNewArticles setelah refresh
+    hasNewArticles.value = false;
+    
     // Update timestamp artikel terbaru
     if (latestArticles.value.length > 0 && latestArticles.value[0].publishedAt) {
       lastArticleTimestamp.value = latestArticles.value[0].publishedAt;
     }
+    
+    // Periksa kembali untuk perubahan setelah refresh
+    setTimeout(() => {
+      checkForNewArticles();
+    }, 5000); // Cek lagi setelah 5 detik untuk memastikan status terbaru
   } catch (error) {
     console.error('Error refreshing articles:', error);
   } finally {
