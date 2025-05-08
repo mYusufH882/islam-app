@@ -1,0 +1,40 @@
+/* 
+ * Minimal Reset CSS 
+ * Reset hanya properti penting untuk menghindari konflik dengan Tailwind
+ */
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+  
+body, h1, h2, h3, h4, h5, h6, p, ul, ol, figure, blockquote, dl, dd {
+    margin: 0;
+}
+  
+html {
+    scroll-behavior: smooth;
+}
+  
+body {
+    min-height: 100vh;
+    line-height: 1.5;
+    text-rendering: optimizeSpeed;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+img, picture, svg {
+    max-width: 100%;
+    display: block;
+}
+  
+input, button, textarea, select {
+    font: inherit;
+}
+  
+/* Khusus untuk font Al-Quran */
+.font-arabic {
+    font-family: 'Scheherazade New', serif;
+    line-height: 1.8;
+    font-size: 1.5rem;
+}

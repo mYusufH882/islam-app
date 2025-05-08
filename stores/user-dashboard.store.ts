@@ -1,8 +1,10 @@
+// stores/user-dashboard.store.ts
 import { defineStore } from 'pinia';
-import { useAuthStore } from '~/stores/auth';
 import { useApi } from '~/composables/useApi';
 import { usePrayerService } from '~/composables/usePrayerService';
+import { ref } from 'vue'; // Gunakan ref standar, bukan shallowRef
 
+// Tetap gunakan interface yang sama untuk tipe data
 export interface LastRead {
   surah: {
     number: number;
@@ -40,6 +42,7 @@ export interface Location {
   country: string;
   latitude: number;
   longitude: number;
+  usingDefault?: boolean;
 }
 
 export interface UserDashboardState {
@@ -49,6 +52,11 @@ export interface UserDashboardState {
   loadingPrayer: boolean;
   prayerError: string | null;
   
+  // Cache timestamps
+  prayerCacheTimestamp: number;
+  bookmarksCacheTimestamp: number;
+  articlesCacheTimestamp: number;
+  
   // Quran
   lastRead: LastRead | null;
   bookmarks: Bookmark[];
@@ -56,17 +64,20 @@ export interface UserDashboardState {
   quranError: string | null;
   
   // Blog
-  latestArticles: any[]; // Tipe sesuaikan dengan Blog model
+  latestArticles: any[]; // Sesuaikan dengan Blog model
   loadingArticles: boolean;
   articlesError: string | null;
   
   // Dashboard
   dashboardInitialized: boolean;
+  dashboardLoadPriority: number;
+
+  _lastUpdateMinuteKey: string | null;
 }
 
 export const useUserDashboardStore = defineStore('userDashboard', {
   state: (): UserDashboardState => ({
-    // Prayer times
+    // Property yang sudah ada
     todayPrayers: [
       { name: 'Subuh', time: '00:00', isNext: false },
       { name: 'Dzuhur', time: '00:00', isNext: false },
@@ -77,6 +88,11 @@ export const useUserDashboardStore = defineStore('userDashboard', {
     prayerLocation: null,
     loadingPrayer: false,
     prayerError: null,
+    
+    // Cache timestamps
+    prayerCacheTimestamp: 0,
+    bookmarksCacheTimestamp: 0,
+    articlesCacheTimestamp: 0,
     
     // Quran
     lastRead: null,
@@ -90,53 +106,86 @@ export const useUserDashboardStore = defineStore('userDashboard', {
     articlesError: null,
     
     // Dashboard
-    dashboardInitialized: false
+    dashboardInitialized: false,
+    dashboardLoadPriority: 0,
+    
+    // Tambahkan properti internal cache dengan nilai awal
+    _lastUpdateMinuteKey: null
   }),
   
   actions: {
-    // Prayer actions
-    async fetchPrayerTimes() {
+    // Prayer times actions
+    async fetchPrayerTimes(lat: number | undefined, lng: number | undefined, forceRefresh: boolean = false) {
+      // Jika tidak forced refresh, periksa cache validity
+      if (!forceRefresh) {
+        const now = Date.now();
+        // Gunakan data cache jika masih valid (15 menit)
+        if (now - this.prayerCacheTimestamp < 15 * 60 * 1000 && 
+            this.todayPrayers.length > 0 && 
+            this.prayerLocation !== null) {
+          this.updateNextPrayer();
+          return true;
+        }
+      }
+      
       this.loadingPrayer = true;
       this.prayerError = null;
       
       try {
+        // Jika lat dan lng diberikan langsung, gunakan nilai tersebut
+        if (lat !== undefined && lng !== undefined) {
+          await this.fetchPrayerTimesWithCoords(lat, lng);
+          return true;
+        }
+        
+        // Jika tidak ada koordinat yang diberikan, coba dapatkan dari geolocation
         if (process.client && navigator.geolocation) {
-          // Menggunakan Promise untuk menangani geolocation dengan tipe yang benar
-          const getPosition = (): Promise<GeolocationPosition> => {
-            return new Promise((resolve, reject) => {
+          try {
+            // Gunakan Promise untuk geolocation
+            const position = await new Promise<GeolocationPosition>((resolve, reject) => {
               navigator.geolocation.getCurrentPosition(
                 position => resolve(position),
-                error => {
-                  console.error('Geolocation error:', error);
-                  reject(error);
-                },
+                error => reject(error),
                 {
                   enableHighAccuracy: true,
-                  timeout: 5000,
+                  timeout: 10000, // Tambah timeout menjadi 10 detik
                   maximumAge: 0
                 }
               );
             });
-          };
-          
-          try {
-            // Coba dapatkan posisi pengguna
-            const position = await getPosition();
-            const { latitude, longitude } = position.coords;
-            await this.fetchPrayerTimesWithCoords(latitude, longitude);
+            
+            // Gunakan koordinat dari geolocation
+            await this.fetchPrayerTimesWithCoords(
+              position.coords.latitude,
+              position.coords.longitude
+            );
           } catch (geoError) {
-            console.log('Izin lokasi ditolak atau error, menggunakan lokasi default Bandung');
-            // Fallback ke Bandung jika izin lokasi ditolak
-            await this.fetchPrayerTimesWithCoords(-6.9175, 107.6191); // Bandung
+            console.error('Geolocation error:', geoError);
+            // Log error code untuk debug
+            if (geoError instanceof GeolocationPositionError) {
+              console.error('Geolocation error code:', geoError.code);
+              // 1 = PERMISSION_DENIED, 2 = POSITION_UNAVAILABLE, 3 = TIMEOUT
+            }
+            
+            // Fallback ke Bandung jika gagal mendapatkan lokasi
+            await this.fetchPrayerTimesWithCoords(-6.9175, 107.6191);
+            // Set flag lokasi default
+            if (this.prayerLocation) {
+              this.prayerLocation.usingDefault = true;
+            }
           }
         } else {
           // Fallback jika geolocation tidak tersedia
-          console.log('Geolocation tidak tersedia, menggunakan lokasi default Bandung');
-          await this.fetchPrayerTimesWithCoords(-6.9175, 107.6191); // Bandung
+          await this.fetchPrayerTimesWithCoords(-6.9175, 107.6191);
         }
+        
+        // Update cache timestamp
+        this.prayerCacheTimestamp = Date.now();
+        return true;
       } catch (error) {
         console.error('Error in fetchPrayerTimes:', error);
         this.prayerError = 'Gagal memuat jadwal salat. Silakan coba lagi.';
+        return false;
       } finally {
         this.loadingPrayer = false;
       }
@@ -164,8 +213,8 @@ export const useUserDashboardStore = defineStore('userDashboard', {
           
           // Pastikan timings ada
           if (prayerTimesData.timings) {
-            // Update prayer times
-            this.todayPrayers = [
+            // Update prayer times dengan efisien
+            const newPrayers = [
               { name: 'Subuh', time: prayerTimesData.timings.Fajr, isNext: false },
               { name: 'Dzuhur', time: prayerTimesData.timings.Dhuhr, isNext: false },
               { name: 'Ashar', time: prayerTimesData.timings.Asr, isNext: false },
@@ -173,64 +222,40 @@ export const useUserDashboardStore = defineStore('userDashboard', {
               { name: 'Isya', time: prayerTimesData.timings.Isha, isNext: false }
             ];
             
+            this.todayPrayers = newPrayers;
+            
             // Calculate which prayer is next
             this.updateNextPrayer();
             
-            // Perbaikan untuk location - gunakan lokasi yang sesuai
+            // Deteksi apakah ini adalah lokasi default
+            const isDefaultLocation = 
+              Math.abs(latitude - (-6.9175)) < 0.01 && 
+              Math.abs(longitude - 107.6191) < 0.01;
+            
+            // Update location data dengan efisien
             if (locationData) {
-              // Jika lokasi "Unknown", gunakan data dari timezone atau default Bandung
-              let city = locationData.city;
-              let country = locationData.country;
-              
-              // Tentukan apakah ini adalah lokasi default Bandung
-              const isBandungDefault = Math.abs(latitude - (-6.9175)) < 0.01 && 
-                                      Math.abs(longitude - 107.6191) < 0.01;
-              
-              // Jika ini adalah koordinat default Bandung atau city/country Unknown
-              if (isBandungDefault || city === "Unknown" || country === "Unknown") {
-                // Jika koordinat default Bandung, gunakan Bandung
-                if (isBandungDefault) {
-                  city = 'Bandung';
-                  country = 'Indonesia';
-                } 
-                // Jika tidak, coba gunakan data timezone
-                else if (prayerTimesData.meta && prayerTimesData.meta.timezone) {
-                  const timezoneParts = prayerTimesData.meta.timezone.split('/');
-                  if (timezoneParts.length > 1) {
-                    city = timezoneParts[1].replace('_', ' ');
-                    country = "Indonesia";
-                  } else {
-                    // Fallback ke Bandung jika tidak bisa mendapatkan kota dari timezone
-                    city = 'Bandung';
-                    country = 'Indonesia';
-                  }
-                } else {
-                  // Fallback ke Bandung jika tidak ada timezone
-                  city = 'Bandung';
-                  country = 'Indonesia';
-                }
-              }
-              
+              // Format data lokasi dengan konsisten
               this.prayerLocation = {
-                city: city,
-                country: country,
+                city: locationData.city === "Unknown" ? 'Bandung' : locationData.city,
+                country: locationData.country === "Unknown" ? 'Indonesia' : locationData.country,
                 latitude: locationData.latitude || latitude,
-                longitude: locationData.longitude || longitude
+                longitude: locationData.longitude || longitude,
+                usingDefault: isDefaultLocation
               };
             } else {
-              // Fallback ke default Bandung
+              // Fallback ke default
               this.prayerLocation = {
                 city: 'Bandung',
                 country: 'Indonesia',
                 latitude,
-                longitude
+                longitude,
+                usingDefault: isDefaultLocation
               };
             }
           } else {
             this.prayerError = 'Waktu salat tidak ditemukan dalam data';
           }
         } else {
-          console.error('Invalid data structure:', responseData);
           this.prayerError = 'Format data jadwal salat tidak valid';
         }
       } catch (error) {
@@ -239,8 +264,22 @@ export const useUserDashboardStore = defineStore('userDashboard', {
       }
     },
     
+    // Optimasi updateNextPrayer untuk mengurangi perhitungan
     updateNextPrayer() {
+      // Jangan lakukan apa-apa jika tidak ada data
+      if (!this.todayPrayers || this.todayPrayers.length === 0) return;
+      
+      // Cek apakah perlu update - hanya update setiap menit
       const now = new Date();
+      const minuteKey = `${now.getHours()}:${now.getMinutes()}`;
+      
+      // Gunakan memoized key untuk mencegah perhitungan berulang
+      if (this._lastUpdateMinuteKey === minuteKey) return;
+      this._lastUpdateMinuteKey = minuteKey;
+      
+      // Buat salinan lokal untuk menghindari mutasi langsung pada state
+      const prayers = [...this.todayPrayers];
+      
       const currentHour = now.getHours();
       const currentMinute = now.getMinutes();
       const currentTimeInMinutes = currentHour * 60 + currentMinute;
@@ -248,14 +287,16 @@ export const useUserDashboardStore = defineStore('userDashboard', {
       let nextPrayerIndex = -1;
       let minDifference = Infinity;
       
-      this.todayPrayers.forEach((prayer, index) => {
+      // Hitung properti isNext & timeRemaining sekali saja
+      prayers.forEach((prayer, index) => {
+        // Reset flags
+        prayer.isNext = false;
+        prayer.timeRemaining = undefined;
+        
+        // Parse prayer time hanya sekali
         const [hour, minute] = prayer.time.split(':').map(Number);
         const prayerTimeInMinutes = hour * 60 + minute;
         const difference = prayerTimeInMinutes - currentTimeInMinutes;
-        
-        // Reset isNext flag and timeRemaining
-        prayer.isNext = false;
-        prayer.timeRemaining = undefined;
         
         if (difference > 0 && difference < minDifference) {
           minDifference = difference;
@@ -263,22 +304,27 @@ export const useUserDashboardStore = defineStore('userDashboard', {
         }
       });
       
-      // If we found a next prayer time
+      // Set next prayer
       if (nextPrayerIndex !== -1) {
-        const prayer = this.todayPrayers[nextPrayerIndex];
+        const prayer = prayers[nextPrayerIndex];
         prayer.isNext = true;
         
+        // Format time remaining - gunakan template string untuk performa
         const hours = Math.floor(minDifference / 60);
         const minutes = minDifference % 60;
         
         let remainingText = '';
         if (hours > 0) {
-          remainingText += `${hours} jam `;
+          remainingText = `${hours} jam ${minutes} menit lagi`;
+        } else {
+          remainingText = `${minutes} menit lagi`;
         }
-        remainingText += `${minutes} menit lagi`;
         
         prayer.timeRemaining = remainingText;
       }
+      
+      // Update state dengan efisien
+      this.todayPrayers = prayers;
     },
     
     // Quran actions
@@ -290,16 +336,18 @@ export const useUserDashboardStore = defineStore('userDashboard', {
             // Parse data dari localStorage
             const rawData = JSON.parse(lastReadJson);
             
-            // Transform data ke format yang diharapkan
-            this.lastRead = {
+            // Transform data ke format yang diharapkan, hanya jika berbeda
+            const newLastRead: LastRead = {
               surah: {
                 number: rawData.surah,
                 name: rawData.name,
-                nameArab: rawData.nameArab || '' // Tambahkan default jika tidak ada
+                nameArab: rawData.nameArab || ''
               },
-              ayat: rawData.page || 1, // Menggunakan page sebagai ayat jika tidak ada ayat
+              ayat: rawData.ayat || rawData.page || 1,
               timestamp: rawData.timestamp
             };
+            
+            this.lastRead = newLastRead;
           } catch (error) {
             console.error('Error parsing last read data:', error);
             this.lastRead = null;
@@ -309,7 +357,9 @@ export const useUserDashboardStore = defineStore('userDashboard', {
     },
 
     async fetchUserLastRead() {
-      if (!useAuthStore().isAuthenticated) return;
+      // Skip jika tidak login
+      const authStore = useAuthStore();
+      if (!authStore.isAuthenticated) return;
       
       try {
         const { apiFetch } = useApi();
@@ -327,23 +377,31 @@ export const useUserDashboardStore = defineStore('userDashboard', {
             timestamp: data.value.data.timestamp
           };
         } else {
-          // Jika tidak ada data dari API, gunakan localStorage sebagai fallback
+          // Jika tidak ada data dari API, gunakan localStorage
           this.loadLastRead();
         }
       } catch (error) {
         console.error('Error fetching user last read:', error);
-        // Tetap gunakan localStorage sebagai fallback
+        // Fallback ke localStorage
         this.loadLastRead();
       }
     },
     
     loadBookmarks() {
       if (process.client) {
+        // Jika ada cache recency check
+        const now = Date.now();
+        if (now - this.bookmarksCacheTimestamp < 5 * 60 * 1000 && 
+            this.bookmarks.length > 0) {
+          return;
+        }
+        
         // Load bookmarks from localStorage for non-logged in users
         const bookmarksJson = localStorage.getItem('quran_bookmarks');
         if (bookmarksJson) {
           try {
             this.bookmarks = JSON.parse(bookmarksJson);
+            this.bookmarksCacheTimestamp = now;
           } catch (error) {
             console.error('Error parsing bookmarks data:', error);
             this.bookmarks = [];
@@ -353,13 +411,17 @@ export const useUserDashboardStore = defineStore('userDashboard', {
         // If user is logged in, fetch bookmarks from API
         const authStore = useAuthStore();
         if (authStore.isAuthenticated) {
-          this.fetchUserBookmarks();
+          // Schedule this to run after a short delay for better loading sequence
+          setTimeout(() => {
+            this.fetchUserBookmarks();
+          }, 500);
         }
       }
     },
     
     async fetchUserBookmarks() {
-      if (!useAuthStore().isAuthenticated) return;
+      const authStore = useAuthStore();
+      if (!authStore.isAuthenticated) return;
       
       this.loadingQuran = true;
       
@@ -385,6 +447,9 @@ export const useUserDashboardStore = defineStore('userDashboard', {
             timestamp: bookmark.createdAt,
             notes: bookmark.notes
           }));
+          
+          // Update cache timestamp
+          this.bookmarksCacheTimestamp = Date.now();
         }
       } catch (error) {
         console.error('Error fetching user bookmarks:', error);
@@ -396,6 +461,14 @@ export const useUserDashboardStore = defineStore('userDashboard', {
     
     // Blog actions
     async fetchLatestArticles() {
+      // Jika data sudah ada dan relatif baru (15 menit), gunakan cache
+      if (!this.loadingArticles && this.latestArticles.length > 0) {
+        const now = Date.now();
+        if (now - this.articlesCacheTimestamp < 15 * 60 * 1000) {
+          return true;
+        }
+      }
+      
       this.loadingArticles = true;
       this.articlesError = null;
       
@@ -412,23 +485,29 @@ export const useUserDashboardStore = defineStore('userDashboard', {
         
         if (data.value && data.value.success) {
           this.latestArticles = data.value.data.blogs;
+          this.articlesCacheTimestamp = Date.now();
+          return true;
         } else {
           this.latestArticles = [];
           this.articlesError = 'Tidak ada artikel yang tersedia saat ini.';
+          return false;
         }
       } catch (error) {
         console.error('Error fetching latest articles:', error);
         this.articlesError = 'Gagal memuat artikel terbaru.';
         this.latestArticles = [];
+        return false;
       } finally {
         this.loadingArticles = false;
       }
     },
 
-    //Refresh blog without reload page
-    async refreshLatestArticles() {
-      // Don't show the full loading state to avoid UI flicker
-      this.articlesError = null;
+    // Mengoptimasi refreshLatestArticles untuk mendukung mode "check only"
+    async refreshLatestArticles(checkOnly: boolean = false) {
+      if (!checkOnly) {
+        // Don't show loading state on checks to avoid UI flicker
+        this.articlesError = null;
+      }
       
       try {
         const { apiFetch } = useApi();
@@ -443,69 +522,108 @@ export const useUserDashboardStore = defineStore('userDashboard', {
         });
         
         if (data.value && data.value.success) {
+          // Jika mode check only, bandingkan dan return apakah ada perubahan
+          if (checkOnly) {
+            // Compare dengan data existing
+            if (this.latestArticles.length === 0 && data.value.data.blogs.length > 0) {
+              return true; // Ada artikel baru
+            }
+            
+            // Periksa apakah ada perubahan ID
+            const currentIds = this.latestArticles.map((a: any) => a.id).sort();
+            const newIds = data.value.data.blogs.map((a: any) => a.id).sort();
+            
+            if (currentIds.length !== newIds.length) {
+              return true; // Jumlah artikel berubah
+            }
+            
+            // Bandingkan array ID
+            for (let i = 0; i < currentIds.length; i++) {
+              if (currentIds[i] !== newIds[i]) {
+                return true; // Ada perubahan ID
+              }
+            }
+            
+            // Periksa timestamp update
+            for (const newArticle of data.value.data.blogs) {
+              const existingArticle = this.latestArticles.find((a: any) => a.id === newArticle.id);
+              if (existingArticle && newArticle.updatedAt && existingArticle.updatedAt &&
+                  new Date(newArticle.updatedAt) > new Date(existingArticle.updatedAt)) {
+                return true; // Ada artikel yang diupdate
+              }
+            }
+            
+            return false; // Tidak ada perubahan
+          }
+          
+          // Mode normal, update state
           this.latestArticles = data.value.data.blogs;
+          this.articlesCacheTimestamp = Date.now();
+          return true;
         } else {
-          this.articlesError = 'Tidak ada artikel yang tersedia saat ini.';
+          if (!checkOnly) {
+            this.articlesError = 'Tidak ada artikel yang tersedia saat ini.';
+          }
+          return false;
         }
       } catch (error) {
         console.error('Error refreshing latest articles:', error);
-        this.articlesError = 'Gagal memperbarui artikel terbaru.';
-      }
-    },
-
-    refreshLastRead() {
-      if (process.client) {
-        const lastReadJson = localStorage.getItem('lastRead');
-        if (lastReadJson) {
-          try {
-            // Parse data dari localStorage
-            const rawData = JSON.parse(lastReadJson);
-            
-            // Update state dengan data baru - PENTING untuk memicu reaktivitas
-            this.lastRead = {
-              surah: {
-                number: rawData.surah,
-                name: rawData.name,
-                nameArab: rawData.nameArab || ''
-              },
-              ayat: rawData.ayat || rawData.page || 1,
-              timestamp: rawData.timestamp
-            };
-            
-            console.log('Last read refreshed:', this.lastRead);
-          } catch (error) {
-            console.error('Error parsing last read data:', error);
-          }
+        if (!checkOnly) {
+          this.articlesError = 'Gagal memperbarui artikel terbaru.';
+        }
+        return false;
+      } finally {
+        if (!checkOnly) {
+          this.loadingArticles = false;
         }
       }
     },
-    
-    // Dashboard initialization
-    async initDashboard(forceRefresh = false) {
+
+    // Optimize dashboard initialization
+    async initDashboard(forceRefresh: boolean = false) {
       if (this.dashboardInitialized && !forceRefresh) return;
       
-      // Load data from localStorage first (instant)
+      this.dashboardLoadPriority = 0;
+      
+      // Load initial data that's quick (from localStorage)
       this.loadLastRead();
-      this.loadBookmarks();
+      
+      // Start prayer times request immediately (most important)
+      this.dashboardLoadPriority = 1;
+      // Berikan nilai default pada parameter fetchPrayerTimes
+      const prayerPromise = this.fetchPrayerTimes(undefined, undefined);
       
       // Update next prayer time initially
       this.updateNextPrayer();
       
-      // Setup a timer to update next prayer time every minute
+      // Load bookmarks with a slight delay
+      setTimeout(() => {
+        this.dashboardLoadPriority = 2;
+        this.loadBookmarks();
+      }, 300);
+      
+      // Fetch articles with a longer delay
+      setTimeout(() => {
+        this.dashboardLoadPriority = 3;
+        this.fetchLatestArticles();
+      }, 1000);
+      
+      // Setup a timer untuk update next prayer time setiap menit
       if (process.client) {
         setInterval(() => {
           this.updateNextPrayer();
         }, 60000); // Every minute
       }
       
-      // Fetch data from API in parallel
-      await Promise.allSettled([
-        this.fetchPrayerTimes(),
-        this.fetchLatestArticles(),
-        this.fetchUserLastRead()
-      ]);
-      
       this.dashboardInitialized = true;
+    },
+    
+    // Fungsi untuk me-refresh lastRead state
+    refreshLastRead() {
+      this.loadLastRead();
     }
   }
 });
+
+// Tambahkan import untuk useAuthStore
+import { useAuthStore } from '~/stores/auth';

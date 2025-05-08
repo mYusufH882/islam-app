@@ -1,0 +1,22 @@
+/* Font untuk teks Arab */
+@font-face {
+    font-family: 'Scheherazade New';
+    src: url('/fonts/ScheherazadeNew-Regular.woff2') format('woff2');
+    font-display: swap; /* Meningkatkan kecepatan render teks */
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* Jika ada versi bold */
+@font-face {
+    font-family: 'Scheherazade New';
+    src: url('/fonts/ScheherazadeNew-Bold.woff2') format('woff2');
+    font-display: swap;
+    font-weight: bold;
+    font-style: normal;
+}
+  
+/* Class helper untuk teks Arab */
+.font-arabic {
+    font-family: 'Scheherazade New', serif;
+}

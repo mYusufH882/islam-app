@@ -1,0 +1,93 @@
+/* 
+ * Dashboard Fix CSS
+ * CSS untuk memperbaiki layout dashboard
+ */
+
+/* Pastikan body tidak memiliki margin dan padding berlebih */
+body {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden; /* Cegah horizontal scroll */
+    min-height: 100vh;
+  }
+  
+  /* Pastikan app container menggunakan seluruh height yang tersedia */
+  #app {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 0 !important; /* Hapus semua padding */
+  }
+  
+  /* Khusus layout container */
+  .page-container,
+  .layout-container,
+  .default-layout {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0; /* Penting: cegah div tumbuh terlalu besar */
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  /* Class untuk halaman dashboard yang sudah dimuat */
+  .dashboard-loaded {
+    padding-top: 0 !important;
+  }
+  
+  /* Containers dan wrappers global */
+  .container,
+  .wrapper,
+  .content-wrapper {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+  }
+  
+  /* Hindari clearfix dan float issues */
+  .clearfix::after {
+    content: "";
+    display: table;
+    clear: both;
+  }
+  
+  /* Fix untuk app header */
+  .app-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  
+  /* Fix untuk bottom navigation */
+  .bottom-navigation {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+  }
+  
+  /* Perbaiki layout main scroll area */
+  .main-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch; /* Smooth scroll di iOS */
+  }
+  
+  /* Batasi tinggi komponen skeleton loader */
+  .skeleton-loader {
+    max-height: 150px;
+    overflow: hidden;
+  }
+  
+  /* Respons untuk perangkat mobile */
+  @media screen and (max-width: 768px) {
+    #app {
+      min-height: -webkit-fill-available; /* Fix untuk iOS */
+    }
+    
+    /* Tambahkan spacing yang tepat sesuai UI */
+    .dashboard-container {
+      padding: 0.5rem !important;
+      gap: 0.5rem !important;
+    }
+  }
