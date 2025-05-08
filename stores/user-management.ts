@@ -22,8 +22,8 @@ interface CreateUserData {
   username: string;
   email: string;
   password: string;
-  role: string;
   status: 'active' | 'inactive';
+  // Hapus role karena backend akan selalu menetapkan 'user'
 }
 
 // Interface untuk data yang dikirim saat update user
@@ -32,8 +32,17 @@ interface UpdateUserData {
   username?: string;
   email?: string;
   password?: string;
-  role?: string;
   status?: 'active' | 'inactive';
+  // Hapus role karena backend akan selalu menetapkan 'user'
+}
+
+interface ValidationErrors {
+  [key: string]: string;
+}
+
+interface OperationResult {
+  success: boolean;
+  errors?: ValidationErrors;
 }
 
 interface UserPagination {
@@ -135,7 +144,7 @@ export const useUserManagementStore = defineStore('userManagement', {
     },
 
     // Fungsi create user dengan interface spesifik untuk data
-    async createUser(userData: CreateUserData) {
+    async createUser(userData: CreateUserData): Promise<OperationResult> {
       this.loading = true;
       this.error = null;
       
@@ -148,26 +157,88 @@ export const useUserManagementStore = defineStore('userManagement', {
         });
         
         if (error.value) {
-          throw new Error(error.value.message || 'Gagal membuat pengguna baru');
+          // Coba parse error message dan data
+          const errorData = error.value.data || {};
+          
+          // Cek jika response berisi data validasi error
+          if (errorData.success === false && errorData.message) {
+            // Coba parse pesan error berdasarkan format backend
+            const message = errorData.message;
+            
+            // Jika pesan berisi 'exists', kemungkinan username/email sudah ada
+            if (message.toLowerCase().includes('username') && message.toLowerCase().includes('exists')) {
+              return {
+                success: false,
+                errors: {
+                  username: 'Username sudah digunakan'
+                }
+              };
+            } else if (message.toLowerCase().includes('email') && message.toLowerCase().includes('exists')) {
+              return {
+                success: false,
+                errors: {
+                  email: 'Email sudah digunakan'
+                }
+              };
+            } else {
+              // Generic error message
+              return {
+                success: false,
+                errors: {
+                  global: message || 'Gagal membuat pengguna'
+                }
+              };
+            }
+          }
+          
+          // Jika ada validasi error spesifik per field
+          if (errorData.errors && typeof errorData.errors === 'object') {
+            return {
+              success: false,
+              errors: errorData.errors
+            };
+          }
+          
+          // Default error
+          return {
+            success: false,
+            errors: {
+              global: errorData.message || error.value.message || 'Gagal membuat pengguna baru'
+            }
+          };
         }
         
+        // Success case
         if (data.value && data.value.success) {
           await this.fetchUsers();
-          return true;
+          return {
+            success: true
+          };
         }
         
-        return false;
+        return {
+          success: false,
+          errors: {
+            global: 'Terjadi kesalahan saat membuat pengguna'
+          }
+        };
       } catch (err: any) {
         this.error = err.message || 'Terjadi kesalahan saat membuat pengguna baru';
         console.error('Create user error:', err);
-        return false;
+        
+        return {
+          success: false,
+          errors: {
+            global: err.message || 'Terjadi kesalahan saat membuat pengguna baru'
+          }
+        };
       } finally {
         this.loading = false;
       }
     },
 
     // Fungsi update user dengan interface spesifik untuk data
-    async updateUser(id: number, userData: UpdateUserData) {
+    async updateUser(id: number, userData: UpdateUserData): Promise<OperationResult> {
       this.loading = true;
       this.error = null;
       
@@ -180,19 +251,45 @@ export const useUserManagementStore = defineStore('userManagement', {
         });
         
         if (error.value) {
-          throw new Error(error.value.message || 'Gagal mengupdate pengguna');
+          // Coba ekstrak error per field jika tersedia
+          const errorData = error.value.data || {};
+          
+          // Jika response dari backend menyertakan validasi errors
+          if (errorData.errors && typeof errorData.errors === 'object') {
+            // Return error per field
+            return {
+              success: false,
+              errors: errorData.errors
+            };
+          }
+          
+          // Jika hanya ada pesan error umum
+          throw new Error(error.value.message || errorData.message || 'Gagal mengupdate pengguna');
         }
         
         if (data.value && data.value.success) {
           await this.fetchUsers();
-          return true;
+          return {
+            success: true
+          };
         }
         
-        return false;
+        return {
+          success: false,
+          errors: {
+            global: 'Gagal mengupdate pengguna'
+          }
+        };
       } catch (err: any) {
         this.error = err.message || 'Terjadi kesalahan saat mengupdate pengguna';
         console.error('Update user error:', err);
-        return false;
+        
+        return {
+          success: false,
+          errors: {
+            global: err.message || 'Terjadi kesalahan saat mengupdate pengguna'
+          }
+        };
       } finally {
         this.loading = false;
       }
