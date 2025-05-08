@@ -1,10 +1,19 @@
 <template>
   <!-- Main Content -->
   <div>
+    <!-- Bookmark notification message -->
+    <div v-if="showBookmarkMessage" 
+        class="fixed top-20 right-4 bg-blue-600 text-white py-2 px-4 rounded-lg shadow-lg z-50 transition-opacity duration-300"
+        :class="{'opacity-100': showBookmarkMessage, 'opacity-0': !showBookmarkMessage}">
+      {{ bookmarkMessage }}
+    </div>
+    
     <!-- Greeting Card -->
     <div class="mb-6 bg-white p-4 rounded-lg shadow">
-      <h2 class="text-lg font-semibold">Assalamu'alaikum</h2>
-      <p class="text-gray-600">Selamat datang di Enterpreneur Muslim App</p>
+      <h2 class="text-lg font-semibold">
+        Assalamu'alaikum{{ authStore.isAuthenticated ? ', ' + getUserName() : ', Akhi/Ukhti' }}
+      </h2>
+      <p class="text-gray-600">Selamat datang di Pemuda Muslim Cimsel</p>
       <div class="mt-2 flex items-center text-sm text-gray-500">
         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -175,7 +184,6 @@
           <div class="flex justify-between">
             <h4 class="font-medium">{{ lastRead.surah.name }}</h4>
             <span class="text-sm text-gray-500">
-              <!-- Tampilkan ayat jika ada, jika tidak tampilkan halaman -->
               Ayat {{ lastRead.ayat }}
             </span>
           </div>
@@ -258,7 +266,7 @@
           <!-- Add bookmark icon with absolute positioning -->
           <div class="absolute top-2 right-2">
             <BlogBookmarkIcon
-              :is-bookmarked="isBlogBookmarked(article.id)"
+              :is-bookmarked="isArticleBookmarked(article.id)"
               :blog-id="article.id"
               :blog-title="article.title"
               :blog-excerpt="article.excerpt || truncateText(article.content, 100)"
@@ -295,47 +303,36 @@
   </ClientOnly>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useRoute } from 'vue-router';
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useUserDashboard } from '~/composables/useUserDashboard';
 import { useAuthStore } from '~/stores/auth';
+import { useApi } from '~/composables/useApi'; // Pastikan import ini ada
 import LoginPromptModal from '~/components/LoginPromptModal.vue';
 import BlogBookmarkIcon from '~/components/blog/BlogBookmarkIcon.vue';
 import { useBookmarkService } from '~/composables/useBookmarkService';
+import { getImageUrl } from '~/utils/imageHelper.js'; // Import fungsi getImageUrl
 
+// Auth store
+const authStore = useAuthStore();
 const route = useRoute();
+
+const getUserName = () => {
+  if (!authStore.user) return '';
+  
+  // Prioritaskan name jika ada, kalau tidak gunakan username
+  return authStore.user.name || authStore.user.username || '';
+};
 
 watch(() => route.path, (newPath) => {
   // Jika pengguna kembali ke homepage
   if (newPath === '/') {
     // Muat ulang data terakhir dibaca
-    loadLastRead();
+    // Gunakan initDashboard atau metode yang sesuai
+    initDashboard();
   }
 });
-
-const loadLastRead = () => {
-  if (process.client) {
-    const lastReadJson = localStorage.getItem('lastRead');
-    if (lastReadJson) {
-      try {
-        const lastReadData = JSON.parse(lastReadJson);
-        // Perbarui state lastRead dari dashboard store
-        userDashboard.lastRead = {
-          surah: {
-            number: lastReadData.surah,
-            name: lastReadData.name,
-            nameArab: lastReadData.nameArab || ''
-          },
-          ayat: lastReadData.ayat || lastReadData.page || 1,
-          timestamp: lastReadData.timestamp
-        };
-      } catch (error) {
-        console.error('Error loading last read data:', error);
-      }
-    }
-  }
-};
 
 // Menggunakan composable untuk mengakses state dan methods
 const {
@@ -361,18 +358,23 @@ const {
   formatArticleDate
 } = useUserDashboard();
 
-// Auth store
-const authStore = useAuthStore();
 // Bookmark service
 const bookmarkService = useBookmarkService();
 
-// Computed property to get total bookmarks
-const totalBookmarks = computed(() => {
-  return bookmarkService.quranBookmarks.value.length + bookmarkService.blogBookmarks.value.length;
-});
-
-// State untuk modal pemilihan lokasi\
+// State untuk modal pemilihan lokasi
 const locationPermissionGranted = ref(false);
+const bookmarkMessage = ref('');
+const showBookmarkMessage = ref(false);
+
+// State untuk bookmark
+const bookmarkedArticleIds = ref(new Set());
+// Gunakan ref untuk totalBookmarks agar bisa diupdate secara manual
+const totalBookmarks = ref(0);
+
+// Fungsi untuk memperbarui totalBookmarks
+const updateTotalBookmarks = () => {
+  totalBookmarks.value = bookmarkService.quranBookmarks.value.length + bookmarkService.blogBookmarks.value.length;
+};
 
 // Add these new state variables
 const refreshingArticles = ref(false);
@@ -383,8 +385,43 @@ const displayedArticles = computed(() => {
   return latestArticles.value.slice(0, 3);
 });
 
-const isBlogBookmarked = (blogId) => {
-  return bookmarkService.isBlogBookmarked(blogId);
+// Fungsi untuk memeriksa status bookmark menggunakan state lokal
+const isArticleBookmarked = (articleId) => {
+  return bookmarkedArticleIds.value.has(articleId);
+};
+
+// Fungsi untuk menangani perubahan bookmark
+const handleBookmarkUpdate = async ({ blogId, action }) => {
+  console.log(`Bookmark ${action === 'add' ? 'ditambahkan' : 'dihapus'} untuk blog ID: ${blogId}`);
+  
+  // Update status bookmark di state lokal
+  if (action === 'add') {
+    bookmarkedArticleIds.value.add(blogId);
+    bookmarkMessage.value = 'Artikel berhasil ditambahkan ke bookmark';
+    // Tambahkan langsung ke totalBookmarks
+    totalBookmarks.value += 1;
+  } else {
+    bookmarkedArticleIds.value.delete(blogId);
+    bookmarkMessage.value = 'Artikel berhasil dihapus dari bookmark';
+    // Kurangi langsung dari totalBookmarks
+    if (totalBookmarks.value > 0) {
+      totalBookmarks.value -= 1;
+    }
+  }
+  
+  // Paksa pembaruan Set untuk memicu reaktivitas
+  bookmarkedArticleIds.value = new Set(bookmarkedArticleIds.value);
+  
+  // Tampilkan notifikasi
+  showBookmarkMessage.value = true;
+  
+  // Sembunyikan notifikasi setelah 3 detik
+  setTimeout(() => {
+    showBookmarkMessage.value = false;
+  }, 3000);
+  
+  // Pastikan UI diperbarui
+  await nextTick();
 };
 
 const checkForNewArticles = async () => {
@@ -681,6 +718,16 @@ onMounted(async () => {
 
   if (authStore.isAuthenticated) {
     await bookmarkService.loadBookmarks();
+    
+    // Inisialisasi bookmarkedArticleIds
+    bookmarkedArticleIds.value = new Set(
+      bookmarkService.blogBookmarks.value.map(bookmark => 
+        typeof bookmark.blog?.id === 'number' ? bookmark.blog.id : parseInt(bookmark.blog?.id)
+      )
+    );
+    
+    // Inisialisasi totalBookmarks
+    updateTotalBookmarks();
   }
 
   if (latestArticles.value.length > 0 && latestArticles.value[0].publishedAt) {
@@ -708,10 +755,29 @@ onMounted(async () => {
   }
 });
 
+// Tambahkan watcher untuk status autentikasi
+watch(() => authStore.isAuthenticated, async (isAuthenticated) => {
+  if (isAuthenticated) {
+    await bookmarkService.loadBookmarks();
+    
+    // Perbarui bookmarkedArticleIds
+    bookmarkedArticleIds.value = new Set(
+      bookmarkService.blogBookmarks.value.map(bookmark => 
+        typeof bookmark.blog?.id === 'number' ? bookmark.blog.id : parseInt(bookmark.blog?.id)
+      )
+    );
+    
+    // Perbarui totalBookmarks
+    updateTotalBookmarks();
+  } else {
+    // Reset bookmark state jika logout
+    bookmarkedArticleIds.value.clear();
+    totalBookmarks.value = 0;
+  }
+});
+
 onUnmounted(() => {
   // Clear timer saat komponen di-unmount
   clearInterval(timeInterval);
-
-  
 });
 </script>
