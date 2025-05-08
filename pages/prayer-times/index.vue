@@ -32,7 +32,7 @@
         <div class="mt-3 flex justify-between items-center">
           <button 
             @click="showCitySelector = !showCitySelector" 
-            class="text-sm text-blue-600 flex items-center"
+            class="text-xs md:text-sm text-blue-600 flex items-center"
           >
             {{ showCitySelector ? 'Tutup Pemilihan Kota' : 'Pilih Kota' }}
             <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
