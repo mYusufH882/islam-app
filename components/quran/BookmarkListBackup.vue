@@ -87,7 +87,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['remove-bookmark', 'bookmark-deleted']);
+const emit = defineEmits(['remove-bookmark']);
 const router = useRouter();
 const quranService = useQuranService();
 const bookmarkService = useBookmarkService();
@@ -105,26 +105,19 @@ const deleteError = ref(null);
 
 // Processes bookmarks to normalize data structure
 const processedBookmarks = computed(() => {
-  if (!props.bookmarks || !Array.isArray(props.bookmarks)) {
-    console.warn('Bookmarks is not an array or is undefined:', props.bookmarks);
-    return [];
-  }
-  
   return props.bookmarks.map(bookmark => {
-    if (!bookmark) return null;
-    
     // Normalize bookmark structure
     const processedBookmark = { ...bookmark };
     
     // Extract surah and verse info from referenceId if needed
-    if (bookmark.referenceId && typeof bookmark.referenceId === 'string' && bookmark.referenceId.startsWith('quran:')) {
+    if (bookmark.referenceId && bookmark.referenceId.startsWith('quran:')) {
       const parts = bookmark.referenceId.split(':');
       if (parts.length >= 3) {
         const surahId = parseInt(parts[1]);
         const verseId = parseInt(parts[2]);
         
-        if (!isNaN(surahId)) processedBookmark.surahId = surahId;
-        if (!isNaN(verseId)) processedBookmark.ayat = verseId;
+        processedBookmark.surahId = surahId;
+        processedBookmark.ayat = verseId;
         
         // Use cached surah data if available
         if (surahsData.value[surahId]) {
@@ -147,7 +140,7 @@ const processedBookmarks = computed(() => {
     }
     
     return processedBookmark;
-  }).filter(bookmark => bookmark !== null); // Remove any null entries
+  });
 });
 
 // Helper function to get surah name with fallbacks
@@ -335,43 +328,18 @@ const confirmDelete = async () => {
 
 const getBookmarkId = (bookmark) => {
   // Coba berbagai kemungkinan lokasi ID
-  console.log('Getting bookmark ID for:', bookmark);
-  
-  // Jika ada original ID (dari database)
-  if (bookmark.id !== undefined) {
-    if (typeof bookmark.id === 'number') {
-      console.log(`Using numeric ID: ${bookmark.id}`);
-      return bookmark.id;
-    }
-    
-    if (typeof bookmark.id === 'string' && bookmark.id.includes(':')) {
-      console.log(`Using composite ID: ${bookmark.id}`);
-      return bookmark.id;
-    }
-    
-    // ID lainnya (string tanpa : atau number)
-    console.log(`Using ID: ${bookmark.id}`);
+  if (bookmark.id) {
     return bookmark.id;
   }
   
-  // Jika ID ada di referenceId format "quran:1:2" atau ID format composite
-  if (bookmark.referenceId && typeof bookmark.referenceId === 'string' && bookmark.referenceId.includes(':')) {
-    console.log(`Using referenceId: ${bookmark.referenceId}`);
+  // Jika ID ada di referenceId format "quran:1:2"
+  if (bookmark.referenceId && bookmark.referenceId.includes(':')) {
     return bookmark.referenceId;
   }
   
-  // Jika bookmark memiliki format lain (rekonstruksi ID dari komponen)
+  // Jika bookmark memiliki format lain
   if (bookmark.surahId && bookmark.ayat) {
-    const compositeId = `quran:${bookmark.surahId}:${bookmark.ayat}`;
-    console.log(`Reconstructed ID: ${compositeId}`);
-    return compositeId;
-  }
-  
-  // Jika bookmark memiliki surah object
-  if (bookmark.surah?.number && bookmark.ayat) {
-    const compositeId = `quran:${bookmark.surah.number}:${bookmark.ayat}`;
-    console.log(`Reconstructed ID from surah object: ${compositeId}`);
-    return compositeId;
+    return `quran:${bookmark.surahId}:${bookmark.ayat}`;
   }
   
   console.warn('Tidak dapat menentukan ID bookmark:', bookmark);
@@ -389,8 +357,6 @@ const loadSurahsData = async () => {
     const surahIds = new Set();
     
     props.bookmarks.forEach(bookmark => {
-      if (!bookmark) return;
-      
       let surahId = null;
       
       // Extract from different possible paths
@@ -398,14 +364,14 @@ const loadSurahsData = async () => {
         surahId = bookmark.surah.number;
       } else if (bookmark.surahId) {
         surahId = bookmark.surahId;
-      } else if (bookmark.referenceId && typeof bookmark.referenceId === 'string' && bookmark.referenceId.startsWith('quran:')) {
+      } else if (bookmark.referenceId && bookmark.referenceId.startsWith('quran:')) {
         const parts = bookmark.referenceId.split(':');
         if (parts.length >= 2) {
           surahId = parseInt(parts[1]);
         }
       }
       
-      if (surahId && !isNaN(surahId) && !surahsData.value[surahId]) {
+      if (surahId && !surahsData.value[surahId]) {
         surahIds.add(surahId);
       }
     });
@@ -416,7 +382,7 @@ const loadSurahsData = async () => {
         const { data } = await quranService.fetchSurahById(surahId);
         if (data) {
           surahsData.value[surahId] = data;
-          console.log(`Fetched surah ${surahId}:`, data.name?.transliteration?.id || 'Unknown');
+          console.log(`Fetched surah ${surahId}:`, data);
         }
       } catch (error) {
         console.error(`Error fetching surah ${surahId}:`, error);

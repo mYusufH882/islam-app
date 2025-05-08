@@ -9,6 +9,13 @@
         Kembali
       </NuxtLink>
 
+      <!-- Bookmark notification message -->
+      <div v-if="showBookmarkMessage" 
+          class="fixed top-20 right-4 bg-blue-600 text-white py-2 px-4 rounded-lg shadow-lg z-50 transition-opacity duration-300"
+          :class="{'opacity-100': showBookmarkMessage, 'opacity-0': !showBookmarkMessage}">
+        {{ bookmarkMessage }}
+      </div>
+
       <!-- Surah Navigation -->
       <div class="flex w-full sm:w-auto justify-between sm:justify-end gap-2">
         <NuxtLink 
@@ -351,6 +358,9 @@ const currentVisibleVerse = ref<number | null>(null);
 const lastSavedVerse = ref<number | null>(null);
 const saveTimeout = ref<number | null>(null);
 
+const bookmarkMessage = ref('');
+const showBookmarkMessage = ref(false);
+
 // Deklarasikan tipe variabel verseObserver dengan benar
 let verseObserver: IntersectionObserver | null = null;
 
@@ -366,7 +376,7 @@ const handleBookmarkUpdate = async (event: BookmarkEvent, verse: Verse): Promise
   try {
     if (event.action === 'add') {
       await bookmarkService.addBookmark({
-        type: 'quran', // Tambahkan ini
+        type: 'quran',
         surahId: event.surahId,
         verseId: event.verseId,
         surahName: surah.value.name?.transliteration?.id || '',
@@ -374,18 +384,39 @@ const handleBookmarkUpdate = async (event: BookmarkEvent, verse: Verse): Promise
         text: verse.text.arab,
         translation: verse.translation.id
       });
+
+      // Tampilkan pesan sukses
+      bookmarkMessage.value = 'Ayat berhasil ditambahkan ke bookmark';
+      showBookmarkMessage.value = true;
       
-      // Show success message
-      alert('Ayat berhasil ditambahkan ke bookmark');
+      // Tutup pesan setelah 3 detik
+      setTimeout(() => {
+        showBookmarkMessage.value = false;
+      }, 3000);
     } else {
+      // Hapus bookmark
       await bookmarkService.removeBookmark(`quran:${event.surahId}:${event.verseId}`);
       
-      // Show success message
-      alert('Ayat berhasil dihapus dari bookmark');
+      // Tampilkan pesan sukses
+      bookmarkMessage.value = 'Ayat berhasil dihapus dari bookmark';
+      showBookmarkMessage.value = true;
+      
+      // Tutup pesan setelah 3 detik
+      setTimeout(() => {
+        showBookmarkMessage.value = false;
+      }, 3000);
     }
   } catch (error) {
     console.error('Error updating bookmark:', error);
-    alert('Gagal memperbarui bookmark. Silakan coba lagi.');
+    
+    // Tampilkan pesan error
+    bookmarkMessage.value = 'Gagal memperbarui bookmark. Silakan coba lagi.';
+    showBookmarkMessage.value = true;
+    
+    // Tutup pesan error setelah 3 detik
+    setTimeout(() => {
+      showBookmarkMessage.value = false;
+    }, 3000);
   }
 };
 

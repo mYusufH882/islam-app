@@ -41,6 +41,14 @@
         <p class="text-gray-600">Ayat dan artikel yang Anda tandai</p>
       </div>
 
+      <!-- Notifikasi status operasi -->
+      <div v-if="statusMessage" :class="[
+        'mb-4 p-3 rounded-md text-sm',
+        statusType === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
+      ]">
+        {{ statusMessage }}
+      </div>
+
       <!-- Filter Tab -->
       <div class="mb-6 bg-white rounded-lg shadow overflow-hidden">
         <div class="flex border-b border-gray-200">
@@ -66,6 +74,7 @@
         <BookmarkList 
           :bookmarks="quranBookmarks" 
           @remove-bookmark="removeQuranBookmark"
+          @bookmark-deleted="handleBookmarkDeleted"
         />
       </div>
       
@@ -73,6 +82,7 @@
         <BlogBookmarkList 
           :bookmarks="blogBookmarks" 
           @remove-bookmark="removeBlogBookmark"
+          @bookmark-deleted="handleBookmarkDeleted"
         />
       </div>
     </div>
@@ -95,6 +105,11 @@ const activeTab = ref('quran');
 // State untuk mengontrol pemberitahuan akses ditolak
 const accessDenied = ref(false);
 
+// State untuk menampilkan status operasi
+const statusMessage = ref('');
+const statusType = ref('success');
+const statusTimeout = ref(null);
+
 // Computed properties to get bookmarks by type
 const quranBookmarks = computed(() => {
   return bookmarkService.quranBookmarks.value;
@@ -103,6 +118,22 @@ const quranBookmarks = computed(() => {
 const blogBookmarks = computed(() => {
   return bookmarkService.blogBookmarks.value;
 });
+
+// Function untuk menampilkan status
+const showStatus = (message, type = 'success') => {
+  statusMessage.value = message;
+  statusType.value = type;
+  
+  // Clear any existing timeout
+  if (statusTimeout.value) {
+    clearTimeout(statusTimeout.value);
+  }
+  
+  // Auto clear after 5 seconds
+  statusTimeout.value = setTimeout(() => {
+    statusMessage.value = '';
+  }, 5000);
+};
 
 // Periksa autentikasi pada mounting komponen
 onMounted(async () => {
@@ -120,12 +151,89 @@ const goToLogin = () => {
   router.push('/auth/login?redirect=/bookmark');
 };
 
-// Handle removing bookmarks
+// Handler untuk menghapus bookmark Quran
 const removeQuranBookmark = async (bookmark) => {
-  await bookmarkService.removeBookmark(bookmark.id);
+  try {
+    // Coba mendapatkan ID bookmark
+    let bookmarkId = bookmark.id;
+    
+    // Jika tidak ada ID langsung, mungkin ID ada di format khusus
+    if (!bookmarkId && bookmark.referenceId) {
+      bookmarkId = bookmark.referenceId;
+    } else if (!bookmarkId && bookmark.surahId && bookmark.ayat) {
+      bookmarkId = `quran:${bookmark.surahId}:${bookmark.ayat}`;
+    }
+    
+    if (!bookmarkId) {
+      console.error('Tidak dapat menentukan ID bookmark:', bookmark);
+      showStatus('Gagal menghapus bookmark: ID tidak valid', 'error');
+      return;
+    }
+    
+    console.log('Menghapus bookmark Al-Quran dengan ID:', bookmarkId);
+    
+    const success = await bookmarkService.removeBookmark(bookmarkId);
+    
+    if (success) {
+      showStatus('Bookmark Al-Quran berhasil dihapus', 'success');
+      // Refresh daftar bookmark
+      await bookmarkService.loadBookmarks();
+    } else {
+      showStatus('Gagal menghapus bookmark', 'error');
+    }
+  } catch (err) {
+    console.error('Error saat menghapus bookmark Quran:', err);
+    showStatus(`Gagal menghapus bookmark: ${err.message || 'Terjadi kesalahan'}`, 'error');
+  }
 };
 
+// Handler untuk menghapus bookmark Blog
 const removeBlogBookmark = async (bookmark) => {
-  await bookmarkService.removeBookmark(bookmark.id);
+  try {
+    // Coba mendapatkan ID bookmark
+    let bookmarkId = bookmark.id;
+    
+    // Jika tidak ada ID langsung, mungkin ID ada di format khusus
+    if (!bookmarkId && bookmark.referenceId) {
+      bookmarkId = bookmark.referenceId;
+    } else if (!bookmarkId && bookmark.blogId) {
+      bookmarkId = `blog:${bookmark.blogId}`;
+    }
+    
+    if (!bookmarkId) {
+      console.error('Tidak dapat menentukan ID bookmark:', bookmark);
+      showStatus('Gagal menghapus bookmark: ID tidak valid', 'error');
+      return;
+    }
+    
+    console.log('Menghapus bookmark Blog dengan ID:', bookmarkId);
+    
+    const success = await bookmarkService.removeBookmark(bookmarkId);
+    
+    if (success) {
+      showStatus('Bookmark Blog berhasil dihapus', 'success');
+      // Refresh daftar bookmark
+      await bookmarkService.loadBookmarks();
+    } else {
+      showStatus('Gagal menghapus bookmark', 'error');
+    }
+  } catch (err) {
+    console.error('Error saat menghapus bookmark Blog:', err);
+    showStatus(`Gagal menghapus bookmark: ${err.message || 'Terjadi kesalahan'}`, 'error');
+  }
+};
+
+// Handler untuk event bookmark-deleted dari komponen anak
+const handleBookmarkDeleted = async (bookmarkId) => {
+  console.log('Bookmark telah dihapus:', bookmarkId);
+  
+  // Tentukan jenis bookmark untuk pesan
+  const isQuranBookmark = typeof bookmarkId === 'string' && bookmarkId.startsWith('quran:');
+  
+  // Tampilkan notifikasi sukses
+  showStatus(`Bookmark ${isQuranBookmark ? 'Al-Quran' : 'Blog'} berhasil dihapus`, 'success');
+  
+  // Refresh daftar bookmark
+  await bookmarkService.loadBookmarks();
 };
 </script>

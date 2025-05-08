@@ -19,7 +19,7 @@ interface BookmarkBlog {
 
 // Main bookmark interface with type discriminator
 interface Bookmark {
-  id: string;
+  id: string | number;
   type: 'quran' | 'blog';
   timestamp: string;
   // Quran specific fields
@@ -29,6 +29,10 @@ interface Bookmark {
   translation?: string;
   // Blog specific fields
   blog?: BookmarkBlog;
+  // Backend specific fields that might be present
+  referenceId?: string;
+  userId?: number;
+  notes?: string;
 }
 
 // Parameters for adding bookmarks
@@ -97,7 +101,68 @@ export const useBookmarkService = () => {
       const { data } = await apiFetch('/bookmarks');
       
       if (data.value && data.value.success) {
-        bookmarks.value = data.value.data;
+        // Process bookmarks returned from API
+        bookmarks.value = data.value.data.map((bookmark: any) => {
+          // Normalize bookmark format based on API response
+          if (bookmark.type === 'quran') {
+            let surahNumber = 0;
+            let verseNumber = 0;
+            
+            // Extract surah and verse numbers from referenceId if present
+            if (bookmark.referenceId && typeof bookmark.referenceId === 'string' && bookmark.referenceId.startsWith('quran:')) {
+              const parts = bookmark.referenceId.split(':');
+              if (parts.length >= 3) {
+                surahNumber = parseInt(parts[1]);
+                verseNumber = parseInt(parts[2]);
+              }
+            }
+            
+            return {
+              id: bookmark.id,
+              type: 'quran',
+              referenceId: bookmark.referenceId,
+              surah: {
+                number: surahNumber,
+                name: bookmark.notes?.split(' - ')?.[0] || 'Surah'
+              },
+              ayat: verseNumber,
+              text: bookmark.notes?.split(' - ')?.[1] || '',
+              timestamp: bookmark.createdAt || bookmark.timestamp || new Date().toISOString(),
+              userId: bookmark.userId,
+              notes: bookmark.notes
+            };
+          } else if (bookmark.type === 'blog') {
+            let blogId = 0;
+            
+            // Extract blog id from referenceId if present
+            if (bookmark.referenceId && typeof bookmark.referenceId === 'string' && bookmark.referenceId.startsWith('blog:')) {
+              const parts = bookmark.referenceId.split(':');
+              if (parts.length >= 2) {
+                blogId = parseInt(parts[1]);
+              }
+            }
+            
+            return {
+              id: bookmark.id,
+              type: 'blog',
+              referenceId: bookmark.referenceId,
+              blog: {
+                id: blogId,
+                title: bookmark.notes || 'Blog Article'
+              },
+              timestamp: bookmark.createdAt || bookmark.timestamp || new Date().toISOString(),
+              userId: bookmark.userId,
+              notes: bookmark.notes
+            };
+          }
+          
+          // Fallback for unknown types
+          return {
+            ...bookmark,
+            id: bookmark.id || `unknown:${Date.now()}`,
+            timestamp: bookmark.createdAt || bookmark.timestamp || new Date().toISOString()
+          };
+        });
       }
     } catch (err) {
       console.error('API fetch error:', err);
@@ -209,18 +274,46 @@ export const useBookmarkService = () => {
   // Remove a bookmark
   const removeBookmark = async (id: string | number): Promise<boolean> => {
     try {
+      console.log(`Starting to remove bookmark with ID: ${id} (${typeof id})`);
       // Find the bookmark to remove
-      let bookmarkId: string;
+      let bookmarkId: string | number = id;
       let index = -1;
       
       if (typeof id === 'number') {
-        // Assume it's a blog ID
-        bookmarkId = `blog:${id}`;
-        index = bookmarks.value.findIndex(b => b.type === 'blog' && b.blog?.id === id);
-      } else {
-        // It's already a bookmark ID
-        bookmarkId = id;
+        // First try direct number match
         index = bookmarks.value.findIndex(b => b.id === id);
+        
+        if (index === -1) {
+          // Try as blog ID
+          const blogRefId = `blog:${id}`;
+          index = bookmarks.value.findIndex(b => 
+            b.type === 'blog' && b.blog?.id === id || 
+            b.referenceId === blogRefId
+          );
+        }
+      } else {
+        // String ID - direct match
+        index = bookmarks.value.findIndex(b => b.id === id);
+        
+        // Try reference ID
+        if (index === -1) {
+          index = bookmarks.value.findIndex(b => b.referenceId === id);
+        }
+        
+        // Try parsing quran IDs
+        if (index === -1 && id.startsWith('quran:')) {
+          const parts = id.split(':');
+          if (parts.length >= 3) {
+            const surahId = parseInt(parts[1]);
+            const verseId = parseInt(parts[2]);
+            
+            index = bookmarks.value.findIndex(b => 
+              b.type === 'quran' && 
+              b.surah?.number === surahId && 
+              b.ayat === verseId
+            );
+          }
+        }
       }
       
       if (index >= 0) {
@@ -235,9 +328,69 @@ export const useBookmarkService = () => {
           localStorage.setItem('quran_bookmarks', JSON.stringify(quranBookmarks));
         }
         
-        // If authenticated, sync with API
+        // If authenticated, sync with API - use the ID directly
         if (authStore.isAuthenticated) {
-          await syncBookmarkToApi(removedBookmark, 'remove');
+          // Use the database ID (numerical) if available
+          const apiId = typeof removedBookmark.id === 'number' ? 
+            removedBookmark.id : 
+            (removedBookmark.referenceId || bookmarkId);
+            
+          const { apiFetch } = useApi();
+          
+          try {
+            const { data, error } = await apiFetch(`/bookmarks/${apiId}`, {
+              method: 'DELETE'
+            });
+            
+            if (error.value) {
+              // Jika error 404 (Not Found), artinya bookmark sudah tidak ada di database
+              // Ini bukan masalah, jadi kita bisa abaikan
+              if (error.value.statusCode === 404) {
+                // console.log(`Bookmark dengan ID ${apiId} sudah tidak ada di database atau sudah dihapus`);
+              } else {
+                // Untuk error lain, tampilkan pesan error tetapi jangan throw exception
+                // console.error('API error removing bookmark:', error.value);
+              }
+            } else {
+              console.log('Successfully deleted bookmark from API');
+            }
+          } catch (err) {
+            // Tangkap semua error lainnya tapi jangan sampai gagal fungsi removeBookmark
+            console.error('Error saat menghapus bookmark dari API:', err);
+            // Kita tidak return false karena state lokal sudah diperbarui
+          }
+        }
+      } else {
+        console.warn(`Bookmark with ID ${bookmarkId} not found in local state`);
+        
+        // If authenticated, try direct API deletion
+        if (authStore.isAuthenticated) {
+          const { apiFetch } = useApi();
+          console.log(`Attempting direct API deletion for ID: ${id}`);
+          
+          try {
+            const { data, error } = await apiFetch(`/bookmarks/${id}`, {
+              method: 'DELETE'
+            });
+            
+            if (error.value) {
+              // Jika error 404 (Not Found), artinya bookmark sudah tidak ada di database
+              // Ini bukan masalah, jadi kita bisa abaikan
+              if (error.value.statusCode === 404) {
+                // console.log(`Bookmark dengan ID ${id} sudah tidak ada di database atau sudah dihapus`);
+              } else {
+                // Untuk error lain, tampilkan pesan error
+                // console.error('API error removing bookmark:', error.value);
+              }
+            } else {
+              console.log('Successfully deleted bookmark from API via direct deletion');
+              // Refresh bookmarks from API after deletion
+              await fetchBookmarksFromApi();
+            }
+          } catch (err) {
+            console.error('Error attempting direct API deletion:', err);
+            // Tidak perlu return false karena ini adalah upaya terakhir
+          }
         }
       }
       
@@ -261,16 +414,18 @@ export const useBookmarkService = () => {
         if (bookmark.type === 'quran') {
           payload = {
             type: 'quran',
-            referenceId: bookmark.id,
-            notes: `${bookmark.surah?.name} - ${bookmark.text}`
+            referenceId: typeof bookmark.id === 'string' ? bookmark.id : String(bookmark.id),
+            notes: `${bookmark.surah?.name || ''} - ${bookmark.text || ''}`
           };
         } else {
           payload = {
             type: 'blog',
-            referenceId: bookmark.id,
+            referenceId: typeof bookmark.id === 'string' ? bookmark.id : String(bookmark.id),
             notes: bookmark.blog?.title || ''
           };
         }
+        
+        console.log('Syncing bookmark to API (add):', payload);
         
         const { data, error } = await apiFetch('/bookmarks', {
           method: 'POST',
@@ -278,23 +433,15 @@ export const useBookmarkService = () => {
         });
         
         if (error.value) {
+          // Hanya log error tanpa throw exception
           console.error('API error adding bookmark:', error.value);
-          throw new Error(error.value.message || 'Failed to save bookmark to server');
-        }
-      } else if (action === 'remove') {
-        const { data, error } = await apiFetch(`/bookmarks/${bookmark.id}`, {
-          method: 'DELETE'
-        });
-        
-        if (error.value) {
-          console.error('API error removing bookmark:', error.value);
-          throw new Error(error.value.message || 'Failed to remove bookmark from server');
+          // Tidak perlu menampilkan UI error
+        } else {
+          console.log('Bookmark added to API successfully:', data.value);
         }
       }
     } catch (err) {
       console.error('Error syncing bookmark to API:', err);
-      // We don't re-throw the error as we've already updated local state
-      // But in a production app, consider showing a notification to the user
     }
   };
   
