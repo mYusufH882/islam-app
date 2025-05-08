@@ -1,3 +1,4 @@
+// Di useApi.ts
 import { useAuthStore } from "~/stores/auth";
 import type { ApiResponse } from "~/utils/api";
 
@@ -19,13 +20,18 @@ export const useApi = () => {
     }
     
     // Jangan tambahkan Content-Type jika kita mengirim FormData
-    // Browser akan otomatis menambahkan dengan boundary yang tepat
     if (options.body instanceof FormData) {
-      // Hapus Content-Type jika ada, biarkan browser yang mengaturnya
       delete headers['Content-Type'];
     } else if (!headers['Content-Type'] && !(options.body instanceof FormData)) {
-      // Untuk non-FormData, tambahkan default Content-Type
       headers['Content-Type'] = 'application/json';
+    }
+    
+    // Log untuk debugging
+    if (process.dev) {
+      console.log(`API Request to ${endpoint}:`, {
+        method: options.method || 'GET',
+        body: options.body
+      });
     }
     
     // Merge default options with provided options
@@ -33,7 +39,19 @@ export const useApi = () => {
       baseURL,
       ...options,
       headers,
-      onResponseError(context: { response: { status: number } }) {
+      // Pastikan kita mendapatkan data error lengkap
+      onResponseError(context: { response: { status: number, _data: any } }) {
+        console.log('Error context full:', context);
+        console.log('Error response data:', context.response._data);
+        console.log('Error status:', context.response.status);
+        
+        if (process.dev) {
+          console.error(`API Error Response for ${endpoint}:`, {
+            status: context.response.status,
+            data: context.response._data
+          });
+        }
+        
         // Handle common errors here
         if (context.response.status === 401) {
           // Handle unauthorized (expired token)

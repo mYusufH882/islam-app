@@ -233,13 +233,51 @@
 
         <div class="fixed inset-0 overflow-y-auto">
           <div class="flex min-h-full items-center justify-center p-4">
-            <DialogPanel class="mx-auto max-w-xl w-full rounded-lg bg-white dark:bg-dark-bg-secondary p-6 shadow-xl">
+            <DialogPanel class="mx-auto max-w-xl w-full rounded-lg bg-white dark:bg-dark-bg-secondary p-6 shadow-xl relative">
+              <button
+                type="button"
+                @click="closeUserModal"
+                class="absolute top-3 right-3 text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400 z-10"
+              >
+                <span class="sr-only">Tutup</span>
+                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              
               <DialogTitle class="text-lg font-medium leading-6 text-gray-900 dark:text-white">
                 {{ editMode ? 'Edit Pengguna' : 'Tambah Pengguna Baru' }}
               </DialogTitle>
               
               <div class="mt-4">
+                <div v-if="formErrors.global" class="mb-4 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 dark:border-red-700 p-4">
+                  <div class="flex">
+                    <div class="flex-shrink-0">
+                      <svg class="h-5 w-5 text-red-400 dark:text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                      </svg>
+                    </div>
+                    <div class="ml-3">
+                      <p class="text-sm text-red-700 dark:text-red-400">{{ formErrors.global }}</p>
+                    </div>
+                  </div>
+                </div>
+
                 <form @submit.prevent="saveUser">
+                  <!-- Error Global -->
+                  <div v-if="formErrors.global" class="mb-4 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 dark:border-red-700 p-4">
+                    <div class="flex">
+                      <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-red-400 dark:text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        </svg>
+                      </div>
+                      <div class="ml-3">
+                        <p class="text-sm text-red-700 dark:text-red-400">{{ formErrors.global }}</p>
+                      </div>
+                    </div>
+                  </div>
+
                   <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                     <div class="sm:col-span-3">
                       <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nama Lengkap</label>
@@ -249,9 +287,11 @@
                           id="name" 
                           v-model="userForm.name" 
                           class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 dark:bg-dark-bg-primary dark:text-white rounded-md" 
+                          :class="{'border-red-500 dark:border-red-500 ring-red-500': formErrors.name}"
                           required 
                         />
                       </div>
+                      <p v-if="formErrors.name" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ formErrors.name }}</p>
                     </div>
 
                     <div class="sm:col-span-3">
@@ -262,9 +302,11 @@
                           id="username" 
                           v-model="userForm.username" 
                           class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 dark:bg-dark-bg-primary dark:text-white rounded-md" 
+                          :class="{'border-red-500 dark:border-red-500 ring-red-500': formErrors.username}"
                           required 
                         />
                       </div>
+                      <p v-if="formErrors.username" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ formErrors.username }}</p>
                     </div>
 
                     <div class="sm:col-span-6">
@@ -275,9 +317,11 @@
                           id="email" 
                           v-model="userForm.email" 
                           class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 dark:bg-dark-bg-primary dark:text-white rounded-md" 
+                          :class="{'border-red-500 dark:border-red-500 ring-red-500': formErrors.email}"
                           required 
                         />
                       </div>
+                      <p v-if="formErrors.email" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ formErrors.email }}</p>
                     </div>
 
                     <div class="sm:col-span-3" v-if="!editMode">
@@ -288,9 +332,11 @@
                           id="password" 
                           v-model="userForm.password" 
                           class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 dark:bg-dark-bg-primary dark:text-white rounded-md" 
+                          :class="{'border-red-500 dark:border-red-500 ring-red-500': formErrors.password}"
                           :required="!editMode" 
                         />
                       </div>
+                      <p v-if="formErrors.password" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ formErrors.password }}</p>
                     </div>
 
                     <div class="sm:col-span-3" v-if="!editMode">
@@ -301,9 +347,11 @@
                           id="confirmPassword" 
                           v-model="userForm.confirmPassword" 
                           class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 dark:bg-dark-bg-primary dark:text-white rounded-md" 
+                          :class="{'border-red-500 dark:border-red-500 ring-red-500': formErrors.confirmPassword}"
                           :required="!editMode" 
                         />
                       </div>
+                      <p v-if="formErrors.confirmPassword" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ formErrors.confirmPassword }}</p>
                     </div>
 
                     <div class="sm:col-span-3">
@@ -313,11 +361,13 @@
                           id="status" 
                           v-model="userForm.status" 
                           class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 dark:bg-dark-bg-primary dark:text-white rounded-md"
+                          :class="{'border-red-500 dark:border-red-500 ring-red-500': formErrors.status}"
                         >
                           <option value="active">Aktif</option>
                           <option value="inactive">Nonaktif</option>
                         </select>
                       </div>
+                      <p v-if="formErrors.status" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ formErrors.status }}</p>
                     </div>
                   </div>
 
@@ -385,7 +435,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
 import { useUserManagementStore, type User, type CreateUserData, type UpdateUserData } from '~/stores/user-management';
-import { useApi } from '~/composables/useApi';
 
 // Definisikan layout untuk halaman ini
 definePageMeta({
@@ -407,6 +456,30 @@ const isDeleteModalOpen = ref(false);
 const editMode = ref(false);
 const selectedUser = ref<User | null>(null);
 
+// State management form
+const formErrors = ref({
+  name: '',
+  username: '',
+  email: '',
+  password: '',
+  confirmPassword: '',
+  status: '',
+  global: '' // Untuk error umum yang tidak terkait dengan field tertentu
+});
+
+// Fungsi untuk reset form errors
+const resetFormErrors = () => {
+  formErrors.value = {
+    name: '',
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    status: '',
+    global: ''
+  };
+};
+
 // Form state dengan semua field yang diperlukan
 const userForm = ref({
   id: null as number | null,
@@ -419,6 +492,20 @@ const userForm = ref({
   role: 'user'
 });
 
+// Fungsi untuk reset form
+const resetUserForm = () => {
+  userForm.value = {
+    id: null,
+    name: '',
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    status: 'active' as 'active' | 'inactive',
+    role: 'user'
+  };
+};
+
 // Watch selectedUser untuk mengisi form saat mode edit
 watch(selectedUser, (user) => {
   if (user) {
@@ -429,21 +516,11 @@ watch(selectedUser, (user) => {
       email: user.email,
       password: '',
       confirmPassword: '',
-      status: user.status || 'active',
+      status: user.status === 'inactive' ? 'inactive' : 'active' as 'active' | 'inactive',
       role: user.role || 'user'
     };
   } else {
-    // Reset form jika tidak ada user yang dipilih
-    userForm.value = {
-      id: null,
-      name: '',
-      username: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
-      status: 'active',
-      role: 'user'
-    };
+    resetUserForm();
   }
 });
 
@@ -521,6 +598,7 @@ const prevPage = () => {
 const openAddUserModal = () => {
   editMode.value = false;
   selectedUser.value = null;
+  resetUserForm();
   isUserModalOpen.value = true;
 };
 
@@ -532,6 +610,10 @@ const openEditUserModal = (user: User) => {
 
 const closeUserModal = () => {
   isUserModalOpen.value = false;
+  resetUserForm();
+  resetFormErrors(); // Reset form errors saat modal ditutup
+  editMode.value = false;
+  selectedUser.value = null;
 };
 
 const openDeleteModal = (user: User) => {
@@ -551,53 +633,124 @@ const fetchUsers = () => {
 
 // Fungsi save user dengan tipe data yang sesuai
 const saveUser = async () => {
-  // Validasi password match jika mode tambah
-  if (!editMode.value && userForm.value.password !== userForm.value.confirmPassword) {
-    alert('Password dan konfirmasi password tidak cocok');
+  // Reset errors sebelum validasi baru
+  resetFormErrors();
+  
+  // Validasi client-side
+  let hasError = false;
+  
+  // Validasi nama
+  if (!userForm.value.name.trim()) {
+    formErrors.value.name = 'Nama lengkap harus diisi';
+    hasError = true;
+  }
+  
+  // Validasi username
+  if (!userForm.value.username.trim()) {
+    formErrors.value.username = 'Username harus diisi';
+    hasError = true;
+  } else if (!/^[a-zA-Z0-9_]{3,20}$/.test(userForm.value.username)) {
+    formErrors.value.username = 'Username harus 3-20 karakter (huruf, angka, underscore)';
+    hasError = true;
+  }
+  
+  // Validasi email
+  if (!userForm.value.email.trim()) {
+    formErrors.value.email = 'Email harus diisi';
+    hasError = true;
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userForm.value.email)) {
+    formErrors.value.email = 'Format email tidak valid';
+    hasError = true;
+  }
+  
+  // Validasi password untuk user baru
+  if (!editMode.value) {
+    if (!userForm.value.password) {
+      formErrors.value.password = 'Password harus diisi';
+      hasError = true;
+    } else if (userForm.value.password.length < 8) {
+      formErrors.value.password = 'Password minimal 8 karakter';
+      hasError = true;
+    }
+    
+    if (userForm.value.password !== userForm.value.confirmPassword) {
+      formErrors.value.confirmPassword = 'Konfirmasi password tidak cocok';
+      hasError = true;
+    }
+  }
+  
+  // Jika ada error client-side, hentikan proses
+  if (hasError) {
     return;
   }
 
   try {
     if (editMode.value && userForm.value.id) {
-      // Update user - gunakan interface UpdateUserData
+      // Update user
       const userData: UpdateUserData = {
         name: userForm.value.name,
         username: userForm.value.username,
         email: userForm.value.email,
-        status: userForm.value.status,
-        role: userForm.value.role
+        status: userForm.value.status
       };
       
-      // Hanya tambahkan password jika tidak kosong
+      // Hanya tambahkan password jika diisi
       if (userForm.value.password) {
         userData.password = userForm.value.password;
       }
       
-      const success = await userManagementStore.updateUser(userForm.value.id, userData);
+      const result = await userManagementStore.updateUser(userForm.value.id, userData);
       
-      if (success) {
+      if (result.success) {
         closeUserModal();
+        selectedStatus.value = statuses[0];
+        userManagementStore.setStatus('');
+        await userManagementStore.fetchUsers();
+      } else if (result.errors) {
+        // Tampilkan error dari server
+        Object.entries(result.errors).forEach(([field, message]) => {
+          if (field in formErrors.value) {
+            formErrors.value[field as keyof typeof formErrors.value] = message as string;
+          } else {
+            formErrors.value.global = message as string;
+          }
+        });
       }
     } else {
-      // Create user - gunakan interface CreateUserData
+      // Create user
       const userData: CreateUserData = {
         name: userForm.value.name,
         username: userForm.value.username,
         email: userForm.value.email,
         password: userForm.value.password,
-        status: userForm.value.status,
-        role: userForm.value.role
+        status: userForm.value.status
       };
       
-      const success = await userManagementStore.createUser(userData);
+      console.log('Sending user data:', userData);
       
-      if (success) {
+      const result = await userManagementStore.createUser(userData);
+      
+      console.log('Create user result:', result);
+      
+      if (result.success) {
         closeUserModal();
+        selectedStatus.value = statuses[0];
+        userManagementStore.setStatus('');
+        await userManagementStore.fetchUsers();
+      } else if (result.errors) {
+        // Tampilkan error dari server
+        Object.entries(result.errors).forEach(([field, message]) => {
+          if (field in formErrors.value) {
+            formErrors.value[field as keyof typeof formErrors.value] = message as string;
+          } else {
+            formErrors.value.global = message as string;
+          }
+        });
       }
     }
   } catch (err: any) {
-    alert(err.message || 'Terjadi kesalahan. Silakan coba lagi.');
     console.error('Save user error:', err);
+    formErrors.value.global = err.message || 'Terjadi kesalahan. Silakan coba lagi.';
   }
 };
 
@@ -616,4 +769,9 @@ const deleteUser = async () => {
     console.error('Delete user error:', err);
   }
 };
+
+// Panggil fetchUsers pada saat mount komponen
+onMounted(() => {
+  fetchUsers();
+});
 </script>
