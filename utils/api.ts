@@ -20,6 +20,7 @@ export interface UserProfile {
     name: string;
     role: string;
     lastLogin?: string;
+    lastCommentAt?: string;
 }
 
 // Gunakan interface dari types.ts
