@@ -261,6 +261,15 @@ export const useAuthStore = defineStore('auth', {
           }
       }
     },
+
+    updateLastCommentAt(): void {
+      if (this.user) {
+        this.user = {
+          ...this.user,
+          lastCommentAt: new Date().toISOString()
+        };
+      }
+    },
   
     async fetchUserProfile(): Promise<boolean> {
         // Pastikan hanya dijalankan di sisi klien

@@ -183,42 +183,11 @@
       
       <!-- Comments Section -->
       <div v-if="article" class="bg-white p-4 rounded-lg shadow mb-6">
-        <h3 class="text-lg font-semibold mb-3">Komentar ({{ comments.length }})</h3>
-        
-        <!-- Comment Form -->
-        <div class="mb-4">
-          <textarea 
-            v-model="commentText"
-            placeholder="Tulis komentar Anda..." 
-            class="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            rows="3"
-          ></textarea>
-          <button 
-            @click="submitComment"
-            class="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            Kirim Komentar
-          </button>
-        </div>
-        
-        <!-- Comments List -->
-        <div class="space-y-4">
-          <div v-for="(comment, index) in comments" :key="index" class="border-b border-gray-100 pb-4 last:border-0">
-            <div class="flex items-start">
-              <div class="w-10 h-10 bg-gray-200 rounded-full flex-shrink-0 flex items-center justify-center text-gray-500">
-                {{ getInitials(comment.author) }}
-              </div>
-              <div class="ml-3 flex-1">
-                <div class="flex items-center justify-between">
-                  <h4 class="font-medium">{{ comment.author }}</h4>
-                  <span class="text-xs text-gray-500">{{ comment.date }}</span>
-                </div>
-                <p class="text-gray-800 mt-1">{{ comment.text }}</p>
-                <button @click="replyToComment(index)" class="text-xs text-blue-600 mt-1">Balas</button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <h3 class="text-lg font-semibold mb-3">Komentar</h3>
+        <CommentSection 
+          :blog-id="Number(article.id)" 
+          :key="`comments-${article.id}`"
+        />
       </div>
     </div>
 </template>
@@ -233,6 +202,7 @@ import { marked } from 'marked';
 import { getImageUrl } from '~/utils/imageHelper';
 import { useBookmarkService } from '~/composables/useBookmarkService';
 import BlogBookmarkIcon from '~/components/blog/BlogBookmarkIcon.vue';
+import CommentSection from '~/components/comments/CommentSection.vue';
 
 const route = useRoute();
 const articleId = computed(() => Number(route.params.id));
@@ -245,26 +215,6 @@ const { blogs, categories: storeCategories, loading, error, selectedBlog } = sto
 const bookmarkService = useBookmarkService();
 const bookmarkMessage = ref('');
 const showBookmarkMessage = ref(false);
-
-// Comment state
-const commentText = ref('');
-const comments = ref([
-    {
-        author: 'Ahmad Fadhil',
-        date: '3 jam yang lalu',
-        text: 'Artikel yang sangat bermanfaat, jazakallahu khairan.'
-    },
-    {
-        author: 'Siti Rahmah',
-        date: '1 hari yang lalu',
-        text: 'Alhamdulillah, saya jadi lebih memahami pentingnya amal ibadah ini. Semoga kita bisa mengamalkannya dengan istiqomah.'
-    },
-    {
-        author: 'Muhammad Rizky',
-        date: '3 hari yang lalu',
-        text: 'Mohon penjelasan lebih lanjut tentang dalil-dalil yang menguatkan pembahasan ini. Syukron.'
-    }
-]);
 
 // Computed properties
 const article = computed(() => {
@@ -319,15 +269,6 @@ const formatDate = (dateString) => {
     });
 };
 
-const getInitials = (name) => {
-    return name
-        .split(' ')
-        .map(part => part.charAt(0))
-        .join('')
-        .toUpperCase()
-        .substring(0, 2);
-};
-
 const truncateText = (text, maxLength) => {
     if (!text) return '';
     
@@ -344,26 +285,6 @@ const truncateText = (text, maxLength) => {
     
     // If no space found, just cut at maxLength
     return strippedText.substring(0, lastSpace > 0 ? lastSpace : maxLength);
-};
-
-const submitComment = () => {
-    if (commentText.value.trim()) {
-        comments.value.unshift({
-            author: 'Anda',
-            date: 'Baru saja',
-            text: commentText.value
-        });
-        commentText.value = '';
-    }
-};
-
-const replyToComment = (index) => {
-    const author = comments.value[index].author;
-    commentText.value = `@${author} `;
-    // Focus on comment textarea
-    setTimeout(() => {
-        document.querySelector('textarea').focus();
-    }, 0);
 };
 
 // Bookmark methods

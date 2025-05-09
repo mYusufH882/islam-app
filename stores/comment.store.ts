@@ -1,0 +1,390 @@
+import { defineStore } from 'pinia';
+import { useApi } from '~/composables/useApi';
+import { useAuthStore } from '~/stores/auth';
+
+// Interfaces
+interface Comment {
+  id: number;
+  blogId: number;
+  userId: number;
+  parentId?: number | null;
+  content: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: string;
+  updatedAt: string;
+  author: {
+    id: number;
+    name: string;
+    username: string;
+    avatar?: string;
+  };
+  replies?: Comment[];
+}
+
+interface LoadingStates {
+  fetch: boolean;
+  create: boolean;
+  reply: number | null; // ID komentar yang sedang dibalas
+  update: number | null; // ID komentar yang sedang diupdate
+  delete: number | null; // ID komentar yang sedang dihapus
+}
+
+interface CommentState {
+  comments: Comment[];
+  pendingComments: Comment[];
+  loadingStates: LoadingStates;
+  error: string | null;
+  currentBlogId: number | null;
+}
+
+export const useCommentStore = defineStore('comment', {
+  state: (): CommentState => ({
+    comments: [],
+    pendingComments: [],
+    loadingStates: {
+      fetch: false,
+      create: false,
+      reply: null,
+      update: null,
+      delete: null
+    },
+    error: null,
+    currentBlogId: null
+  }),
+  
+  getters: {
+    // Mendapatkan komentar yang sudah diapprove dengan struktur bertingkat
+    getApprovedComments: (state) => {
+        // Pastikan state.comments tidak undefined
+        if (!state.comments || !Array.isArray(state.comments)) {
+            return [];
+        }
+        
+        // Mendapatkan komentar root (tanpa parent)
+        const rootComments = state.comments
+            .filter(c => !c.parentId && c.status === 'approved')
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        
+            // Mencari balasan untuk setiap komentar
+            return rootComments.map(comment => {
+            return {
+            ...comment,
+            replies: state.comments
+                .filter(c => c.parentId === comment.id && c.status === 'approved')
+                .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+            };
+        });
+    },
+    
+    // Mendapatkan semua komentar user (termasuk pending)
+    getUserComments: (state) => {
+      const authStore = useAuthStore();
+      const userId = authStore.user?.id;
+      
+      if (!userId) return [];
+      
+      return [...state.comments, ...state.pendingComments]
+        .filter(c => c.userId === userId)
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    },
+    
+    // Cek apakah komentar sedang pending
+    isCommentPending: (state) => (commentId: number) => {
+      return state.pendingComments.some(c => c.id === commentId);
+    },
+    
+    // Cek apakah ada loading state
+    isLoading: (state) => {
+      return state.loadingStates.fetch || 
+             state.loadingStates.create || 
+             state.loadingStates.reply !== null ||
+             state.loadingStates.update !== null ||
+             state.loadingStates.delete !== null;
+    }
+  },
+  
+  actions: {
+    // Mengambil komentar untuk blog tertentu
+    async fetchComments(blogId: number) {
+    if (this.loadingStates.fetch) return;
+    
+    this.loadingStates.fetch = true;
+    this.error = null;
+    this.currentBlogId = blogId;
+    
+    try {
+        const { apiFetch } = useApi();
+        const { data, error } = await apiFetch(`/blogs/${blogId}/comments`);
+        
+        if (error.value) {
+        throw new Error(error.value.message || 'Failed to fetch comments');
+        }
+        
+        if (data.value && data.value.success) {
+        this.comments = data.value.data.comments;
+        
+        // Gunakan type assertion untuk mengatasi error TypeScript
+        const responseData = data.value.data as { comments: Comment[], pendingComments?: Comment[] };
+        
+        // Menyimpan komentar pending milik user saat ini
+        const authStore = useAuthStore();
+        if (authStore.isAuthenticated) {
+            this.pendingComments = responseData.pendingComments || [];
+        }
+        }
+    } catch (err: any) {
+        console.error('Error fetching comments:', err);
+        this.error = err.message || 'Failed to load comments';
+    } finally {
+        this.loadingStates.fetch = false;
+    }
+    },
+    
+    // Membuat komentar baru
+    async createComment(content: string, blogId: number) {
+    if (this.loadingStates.create) return null;
+    
+    // Validasi data
+    if (!content || !blogId) {
+        console.error('Content atau blogId tidak ada:', { content, blogId });
+        this.error = 'Konten dan ID blog diperlukan';
+        return null;
+    }
+    
+    this.loadingStates.create = true;
+    this.error = null;
+    this.currentBlogId = blogId;
+    
+    try {
+        const { apiFetch } = useApi();
+        
+        console.log('Sending request to backend:', {
+        url: `/blogs/${blogId}/comments`,
+        method: 'POST',
+        content,
+        blogId
+        });
+        
+        // PENTING: Pastikan request dikirim sebagai POST dan format body benar
+        const { data, error } = await apiFetch(
+        `/blogs/${blogId}/comments`, 
+        {
+            method: 'POST',
+            body: { 
+            content: content,
+            blogId: blogId
+            }
+        }
+        );
+        
+        if (error.value) {
+        console.error('Error response from API:', error.value);
+        throw new Error(error.value.message || 'Failed to create comment');
+        }
+        
+        // Log response untuk debugging
+        console.log('Response from server:', data.value);
+        
+        if (data.value && data.value.success) {
+        // PERBAIKAN: Pastikan kita memiliki data yang tepat
+        // data tersedia di data.value.data
+        const responseData = data.value.data;
+        
+        // Buat objek komentar dari respons
+        // Jika respons tidak memiliki struktur yang diharapkan, buat struktur default
+        const newComment: Comment = {
+            id: responseData?.id || 0,
+            blogId: blogId,
+            userId: responseData?.userId || 0,
+            parentId: responseData?.parentId || null,
+            content: content,
+            status: responseData?.status || 'pending',
+            createdAt: responseData?.createdAt || new Date().toISOString(),
+            updatedAt: responseData?.updatedAt || new Date().toISOString(),
+            author: responseData?.author || {
+            id: 0,
+            name: 'User',
+            username: 'user'
+            }
+        };
+        
+        // Tambahkan komentar ke state yang sesuai
+        if (newComment.status === 'approved') {
+            this.comments.push(newComment);
+        } else {
+            this.pendingComments.push(newComment);
+        }
+        
+        console.log('Comment created successfully:', newComment);
+        
+        // Kembalikan objek komentar baru
+        return newComment;
+        }
+        
+        // Jika sukses tapi tidak ada data
+        return {
+        id: 0,
+        blogId: blogId,
+        userId: 0,
+        content: content,
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        author: {
+            id: 0,
+            name: 'User',
+            username: 'user'
+        }
+        } as Comment;
+        
+    } catch (err: any) {
+        console.error('Error creating comment:', err);
+        this.error = err.message || 'Failed to create comment';
+        return null;
+    } finally {
+        this.loadingStates.create = false;
+    }
+    },
+    
+    // Membalas komentar
+    async replyToComment(parentId: number, content: string) {
+      if (this.loadingStates.reply !== null || !this.currentBlogId) return null;
+      
+      this.loadingStates.reply = parentId;
+      this.error = null;
+      
+      try {
+        const { apiFetch } = useApi();
+        const { data, error } = await apiFetch<{ comment: Comment }>(`/comments/${parentId}/reply`, {
+          method: 'POST',
+          body: { content, blogId: this.currentBlogId }
+        });
+        
+        if (error.value) {
+          throw new Error(error.value.message || 'Failed to reply to comment');
+        }
+        
+        if (data.value && data.value.success) {
+          const newReply = data.value.data.comment;
+          
+          // Jika reply langsung diapprove, tambahkan ke daftar komentar
+          if (newReply.status === 'approved') {
+            this.comments.push(newReply);
+          } 
+          // Jika pending, tambahkan ke daftar pending
+          else if (newReply.status === 'pending') {
+            this.pendingComments.push(newReply);
+          }
+          
+          return newReply;
+        }
+        
+        return null;
+      } catch (err: any) {
+        console.error('Error replying to comment:', err);
+        this.error = err.message || 'Failed to reply to comment';
+        return null;
+      } finally {
+        this.loadingStates.reply = null;
+      }
+    },
+    
+    // Mengupdate komentar
+    async updateComment(commentId: number, content: string) {
+      if (this.loadingStates.update !== null) return false;
+      
+      this.loadingStates.update = commentId;
+      this.error = null;
+      
+      try {
+        const { apiFetch } = useApi();
+        const { data, error } = await apiFetch<{ comment: Comment }>(`/comments/${commentId}`, {
+          method: 'PUT',
+          body: { content }
+        });
+        
+        if (error.value) {
+          throw new Error(error.value.message || 'Failed to update comment');
+        }
+        
+        if (data.value && data.value.success) {
+          const updatedComment = data.value.data.comment;
+          
+          // Update di daftar komentar approved
+          const commentIndex = this.comments.findIndex(c => c.id === commentId);
+          if (commentIndex >= 0) {
+            this.comments[commentIndex] = updatedComment;
+          }
+          
+          // Atau update di daftar komentar pending
+          const pendingIndex = this.pendingComments.findIndex(c => c.id === commentId);
+          if (pendingIndex >= 0) {
+            this.pendingComments[pendingIndex] = updatedComment;
+          }
+          
+          return true;
+        }
+        
+        return false;
+      } catch (err: any) {
+        console.error('Error updating comment:', err);
+        this.error = err.message || 'Failed to update comment';
+        return false;
+      } finally {
+        this.loadingStates.update = null;
+      }
+    },
+    
+    // Menghapus komentar
+    async deleteComment(commentId: number) {
+      if (this.loadingStates.delete !== null) return false;
+      
+      this.loadingStates.delete = commentId;
+      this.error = null;
+      
+      try {
+        const { apiFetch } = useApi();
+        const { data, error } = await apiFetch(`/comments/${commentId}`, {
+          method: 'DELETE'
+        });
+        
+        if (error.value) {
+          throw new Error(error.value.message || 'Failed to delete comment');
+        }
+        
+        if (data.value && data.value.success) {
+          // Hapus dari daftar komentar
+          this.comments = this.comments.filter(c => c.id !== commentId);
+          
+          // Hapus dari daftar pending
+          this.pendingComments = this.pendingComments.filter(c => c.id !== commentId);
+          
+          return true;
+        }
+        
+        return false;
+      } catch (err: any) {
+        console.error('Error deleting comment:', err);
+        this.error = err.message || 'Failed to delete comment';
+        return false;
+      } finally {
+        this.loadingStates.delete = null;
+      }
+    },
+    
+    // Reset state saat navigasi
+    resetState() {
+      this.comments = [];
+      this.pendingComments = [];
+      this.error = null;
+      this.currentBlogId = null;
+      this.loadingStates = {
+        fetch: false,
+        create: false,
+        reply: null,
+        update: null,
+        delete: null
+      };
+    }
+  }
+});
