@@ -95,7 +95,7 @@
         
         <!-- Blog link -->
         <a 
-          :href="`/blogs/${comment.blogId}`"
+          :href="`/blog/${comment.blogId}`"
           class="text-sm font-medium text-blue-600 hover:text-blue-800 mb-2 inline-block"
         >
           Lihat artikel
