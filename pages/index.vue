@@ -444,16 +444,16 @@ const checkForNewArticles = async () => {
       
       // KASUS 1: Tidak ada artikel saat ini, tapi API mengembalikan artikel
       if (latestArticles.value.length === 0 && apiArticles.length > 0) {
-        console.log('Kasus 1: Artikel baru ditemukan saat tidak ada artikel sebelumnya');
+        // console.log('Kasus 1: Artikel baru ditemukan saat tidak ada artikel sebelumnya');
         hasNewArticles.value = true;
         return;
       }
       
       // KASUS 2: Jumlah artikel berubah (artikel ditambah atau dihapus)
       if (latestArticles.value.length !== apiArticles.length) {
-        console.log('Kasus 2: Jumlah artikel berubah', 
-                    'UI:', latestArticles.value.length, 
-                    'API:', apiArticles.length);
+        // console.log('Kasus 2: Jumlah artikel berubah', 
+        //             'UI:', latestArticles.value.length, 
+        //             'API:', apiArticles.length);
         hasNewArticles.value = true;
         return;
       }
@@ -469,7 +469,7 @@ const checkForNewArticles = async () => {
                        currentIds.every((id, index) => id === apiIds[index]);
       
       if (!idsMatch) {
-        console.log('Kasus 3: ID artikel tidak cocok');
+        // console.log('Kasus 3: ID artikel tidak cocok');
         hasNewArticles.value = true;
         return;
       }
@@ -482,7 +482,7 @@ const checkForNewArticles = async () => {
           // Bandingkan timestamp update
           if (apiArticle.updatedAt && displayedArticle.updatedAt &&
               new Date(apiArticle.updatedAt) > new Date(displayedArticle.updatedAt)) {
-            console.log('Kasus 4: Artikel diupdate', apiArticle.id);
+            // console.log('Kasus 4: Artikel diupdate', apiArticle.id);
             hasNewArticles.value = true;
             return;
           }
@@ -490,7 +490,7 @@ const checkForNewArticles = async () => {
           // Periksa juga jika judul atau konten berubah
           if (apiArticle.title !== displayedArticle.title || 
               apiArticle.content !== displayedArticle.content) {
-            console.log('Kasus 4: Judul atau konten berubah', apiArticle.id);
+            // console.log('Kasus 4: Judul atau konten berubah', apiArticle.id);
             hasNewArticles.value = true;
             return;
           }

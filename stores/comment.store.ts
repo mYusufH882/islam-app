@@ -139,7 +139,67 @@ export const useCommentStore = defineStore('comment', {
         this.loadingStates.fetch = false;
     }
     },
+
+    async fetchUserComments(status: string = 'all') {
+      const authStore = useAuthStore();
+      if (!authStore.isAuthenticated) return [];
+      
+      try {
+        this.loadingStates.fetch = true;
+        this.error = null;
+        
+        const { apiFetch } = useApi();
+        
+        // Pastikan endpoint benar
+        const endpoint = status === 'all' 
+          ? '/api/user/comments' 
+          : `/api/user/comments?status=${status}`;
+        
+        console.log(`Calling API endpoint: ${endpoint}`);
+        
+        const { data, error } = await apiFetch(endpoint);
+        
+        if (error.value) {
+          console.error(`API Error for ${endpoint}:`, error.value);
+          throw new Error(error.value.message || 'Failed to fetch user comments');
+        }
+        
+        if (data.value && data.value.success) {
+          console.log(`Comments received from API:`, data.value.data.comments);
+          return data.value.data.comments;
+        }
+        
+        return [];
+      } catch (err) {
+        console.error('Error fetching user comments:', err);
+        return [];
+      } finally {
+        this.loadingStates.fetch = false;
+      }
+    },
     
+    // Count comments by status
+    countCommentsByStatus() {
+      if (!this.comments || !Array.isArray(this.comments)) {
+        return { all: 0, pending: 0, approved: 0, rejected: 0 };
+      }
+      
+      const counts = {
+        all: this.comments.length,
+        pending: 0,
+        approved: 0,
+        rejected: 0
+      };
+      
+      for (const comment of this.comments) {
+        if (comment.status === 'pending') counts.pending++;
+        else if (comment.status === 'approved') counts.approved++;
+        else if (comment.status === 'rejected') counts.rejected++;
+      }
+      
+      return counts;
+    },
+
     // Membuat komentar baru
     async createComment(content: string, blogId: number) {
     if (this.loadingStates.create) return null;
