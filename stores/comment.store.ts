@@ -106,38 +106,56 @@ export const useCommentStore = defineStore('comment', {
   actions: {
     // Mengambil komentar untuk blog tertentu
     async fetchComments(blogId: number) {
-    if (this.loadingStates.fetch) return;
-    
-    this.loadingStates.fetch = true;
-    this.error = null;
-    this.currentBlogId = blogId;
-    
-    try {
+      if (this.loadingStates.fetch) return;
+      
+      this.loadingStates.fetch = true;
+      this.error = null;
+      this.currentBlogId = blogId;
+      
+      try {
         const { apiFetch } = useApi();
         const { data, error } = await apiFetch(`/blogs/${blogId}/comments`);
         
         if (error.value) {
-        throw new Error(error.value.message || 'Failed to fetch comments');
+          throw new Error(error.value.message || 'Failed to fetch comments');
         }
         
         if (data.value && data.value.success) {
-        this.comments = data.value.data.comments;
-        
-        // Gunakan type assertion untuk mengatasi error TypeScript
-        const responseData = data.value.data as { comments: Comment[], pendingComments?: Comment[] };
-        
-        // Menyimpan komentar pending milik user saat ini
-        const authStore = useAuthStore();
-        if (authStore.isAuthenticated) {
-            this.pendingComments = responseData.pendingComments || [];
+          // PERBAIKAN: Simpan komentar pending saat ini
+          const currentPendingComments = Array.isArray(this.pendingComments) 
+            ? this.pendingComments.filter(pc => pc.blogId === blogId) 
+            : [];
+          
+          this.comments = data.value.data.comments || [];
+          
+          // Gunakan type assertion untuk mengatasi error TypeScript
+          const responseData = data.value.data as { comments: Comment[], pendingComments?: Comment[] };
+          
+          // Menyimpan komentar pending milik user saat ini
+          const authStore = useAuthStore();
+          if (authStore.isAuthenticated) {
+            // PERBAIKAN: Gabungkan komentar pending dari respons dengan yang sudah ada
+            const serverPendingComments = responseData.pendingComments || [];
+            
+            // Gabungkan, hindari duplikat berdasarkan ID
+            const allPendingComments = [...serverPendingComments];
+            
+            // Tambahkan komentar pending yang sudah ada tapi belum ada di server
+            currentPendingComments.forEach(cpc => {
+              if (!allPendingComments.some(apc => apc.id === cpc.id)) {
+                allPendingComments.push(cpc);
+              }
+            });
+            
+            this.pendingComments = allPendingComments;
+          }
         }
-        }
-    } catch (err: any) {
+      } catch (err: any) {
         console.error('Error fetching comments:', err);
         this.error = err.message || 'Failed to load comments';
-    } finally {
+      } finally {
         this.loadingStates.fetch = false;
-    }
+      }
     },
 
     async fetchUserComments(status: string = 'all') {
@@ -452,11 +470,25 @@ export const useCommentStore = defineStore('comment', {
     },
     
     // Reset state saat navigasi
+    // resetState() {
+    //   this.comments = [];
+    //   this.pendingComments = [];
+    //   this.error = null;
+    //   this.currentBlogId = null;
+    //   this.loadingStates = {
+    //     fetch: false,
+    //     create: false,
+    //     reply: null,
+    //     update: null,
+    //     delete: null
+    //   };
+    // }
     resetState() {
+      const savedPendingComments = Array.isArray(this.pendingComments) ? [...this.pendingComments] : [];
+      const currentBlogId = this.currentBlogId;
+      
       this.comments = [];
-      this.pendingComments = [];
       this.error = null;
-      this.currentBlogId = null;
       this.loadingStates = {
         fetch: false,
         create: false,
@@ -464,6 +496,10 @@ export const useCommentStore = defineStore('comment', {
         update: null,
         delete: null
       };
+      
+      // PERBAIKAN: Kembalikan komentar pending dan currentBlogId
+      this.pendingComments = savedPendingComments;
+      this.currentBlogId = currentBlogId;
     }
   }
 });
