@@ -126,7 +126,10 @@ const submitReply = async () => {
       
       // Tampilkan pesan sukses
       showSuccessMessage.value = true;
-      needsModeration.value = reply.status === 'pending';
+      
+      // PERBAIKAN: Gunakan optional chaining untuk mencegah error
+      // Dan tambahkan fallback ke true jika status undefined
+      needsModeration.value = reply?.status === 'pending' || true;
       
       // Sembunyikan pesan sukses setelah beberapa detik
       setTimeout(() => {

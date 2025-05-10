@@ -315,7 +315,7 @@ export const useCommentStore = defineStore('comment', {
       
       try {
         const { apiFetch } = useApi();
-        const { data, error } = await apiFetch<{ comment: Comment }>(`/comments/${parentId}/reply`, {
+        const { data, error } = await apiFetch(`/comments/${parentId}/reply`, {
           method: 'POST',
           body: { content, blogId: this.currentBlogId }
         });
@@ -325,14 +325,20 @@ export const useCommentStore = defineStore('comment', {
         }
         
         if (data.value && data.value.success) {
-          const newReply = data.value.data.comment;
+          // PERBAIKAN: Fleksibel dalam mengekstrak data respons
+          // Pertama coba data.value.data.comment, jika tidak ada, gunakan data.value.data
+          const newReply = data.value.data.comment || data.value.data;
           
           // Jika reply langsung diapprove, tambahkan ke daftar komentar
-          if (newReply.status === 'approved') {
+          if (newReply?.status === 'approved') {
             this.comments.push(newReply);
           } 
           // Jika pending, tambahkan ke daftar pending
-          else if (newReply.status === 'pending') {
+          else if (newReply?.status === 'pending') {
+            this.pendingComments.push(newReply);
+          }
+          // Jika tidak ada status, tetap tambahkan ke daftar pending (fallback)
+          else if (newReply) {
             this.pendingComments.push(newReply);
           }
           
@@ -358,7 +364,7 @@ export const useCommentStore = defineStore('comment', {
       
       try {
         const { apiFetch } = useApi();
-        const { data, error } = await apiFetch<{ comment: Comment }>(`/comments/${commentId}`, {
+        const { data, error } = await apiFetch(`/comments/${commentId}`, {
           method: 'PUT',
           body: { content }
         });
@@ -368,18 +374,26 @@ export const useCommentStore = defineStore('comment', {
         }
         
         if (data.value && data.value.success) {
-          const updatedComment = data.value.data.comment;
+          // PERBAIKAN: Fleksibel dalam mengekstrak data respons
+          // Jika data.value.data.comment ada gunakan itu, jika tidak gunakan data.value.data
+          const updatedComment = data.value.data.comment || data.value.data;
           
-          // Update di daftar komentar approved
-          const commentIndex = this.comments.findIndex(c => c.id === commentId);
-          if (commentIndex >= 0) {
-            this.comments[commentIndex] = updatedComment;
+          // PERBAIKAN: Pastikan comments dan pendingComments adalah array
+          if (Array.isArray(this.comments)) {
+            // Update di daftar komentar approved
+            const commentIndex = this.comments.findIndex(c => c.id === commentId);
+            if (commentIndex >= 0) {
+              this.comments[commentIndex] = updatedComment;
+            }
           }
           
-          // Atau update di daftar komentar pending
-          const pendingIndex = this.pendingComments.findIndex(c => c.id === commentId);
-          if (pendingIndex >= 0) {
-            this.pendingComments[pendingIndex] = updatedComment;
+          // PERBAIKAN: Pastikan pendingComments adalah array
+          if (Array.isArray(this.pendingComments)) {
+            // Atau update di daftar komentar pending
+            const pendingIndex = this.pendingComments.findIndex(c => c.id === commentId);
+            if (pendingIndex >= 0) {
+              this.pendingComments[pendingIndex] = updatedComment;
+            }
           }
           
           return true;
@@ -413,11 +427,16 @@ export const useCommentStore = defineStore('comment', {
         }
         
         if (data.value && data.value.success) {
+          // PERBAIKAN: Pastikan comments dan pendingComments adalah array sebelum filter
           // Hapus dari daftar komentar
-          this.comments = this.comments.filter(c => c.id !== commentId);
+          if (Array.isArray(this.comments)) {
+            this.comments = this.comments.filter(c => c.id !== commentId);
+          }
           
           // Hapus dari daftar pending
-          this.pendingComments = this.pendingComments.filter(c => c.id !== commentId);
+          if (Array.isArray(this.pendingComments)) {
+            this.pendingComments = this.pendingComments.filter(c => c.id !== commentId);
+          }
           
           return true;
         }
