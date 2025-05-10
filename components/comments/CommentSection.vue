@@ -110,7 +110,19 @@ const isAuthenticated = computed(() => authStore.isAuthenticated);
 const approvedComments = computed(() => {
   // Tambahkan null check untuk menghindari error
   const comments = commentStore.getApprovedComments;
-  return Array.isArray(comments) ? comments : [];
+  
+  // PERBAIKAN: Tambahkan log untuk debugging
+  console.log('All comments count:', commentStore.comments?.length || 0);
+  console.log('Approved comments count:', comments?.length || 0);
+  
+  // PERBAIKAN: Pastikan hanya mengembalikan komentar dengan status 'approved'
+  if (Array.isArray(comments)) {
+    const approved = comments.filter(c => c.status === 'approved');
+    console.log('Final approved comments count:', approved.length);
+    return approved;
+  }
+  
+  return [];
 });
 const pendingComments = computed(() => {
   if (!authStore.isAuthenticated) return [] as Comment[];

@@ -57,21 +57,32 @@ export const useCommentStore = defineStore('comment', {
     getApprovedComments: (state) => {
         // Pastikan state.comments tidak undefined
         if (!state.comments || !Array.isArray(state.comments)) {
+            console.log('Comments array is empty or not an array');
             return [];
         }
+        
+        // PERBAIKAN: Log untuk debugging
+        console.log('Total comments:', state.comments.length);
+        console.log('Comments with approved status:', state.comments.filter(c => c.status === 'approved').length);
         
         // Mendapatkan komentar root (tanpa parent)
         const rootComments = state.comments
             .filter(c => !c.parentId && c.status === 'approved')
             .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         
-            // Mencari balasan untuk setiap komentar
-            return rootComments.map(comment => {
-            return {
-            ...comment,
-            replies: state.comments
+        console.log('Root comments count:', rootComments.length);
+        
+        // Mencari balasan untuk setiap komentar
+        return rootComments.map(comment => {
+            const replies = state.comments
                 .filter(c => c.parentId === comment.id && c.status === 'approved')
-                .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+                .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+            
+            console.log(`Comment ${comment.id} has ${replies.length} replies`);
+            
+            return {
+                ...comment,
+                replies
             };
         });
     },
@@ -114,11 +125,19 @@ export const useCommentStore = defineStore('comment', {
       
       try {
         const { apiFetch } = useApi();
+        
+        // Tambahkan log untuk debugging
+        console.log(`Fetching comments for blogId: ${blogId}`);
+        
         const { data, error } = await apiFetch(`/blogs/${blogId}/comments`);
         
         if (error.value) {
+          console.error('Error fetching comments:', error.value);
           throw new Error(error.value.message || 'Failed to fetch comments');
         }
+        
+        // Log data respons untuk debugging
+        console.log('Response data:', data.value);
         
         if (data.value && data.value.success) {
           // PERBAIKAN: Simpan komentar pending saat ini
@@ -126,7 +145,19 @@ export const useCommentStore = defineStore('comment', {
             ? this.pendingComments.filter(pc => pc.blogId === blogId) 
             : [];
           
-          this.comments = data.value.data.comments || [];
+          // PERBAIKAN: Pastikan komentar yang disetujui disimpan dengan benar
+          // Jika data.value.data.comments adalah array, gunakan itu
+          // Jika tidak, coba data.value.data
+          const responseComments = data.value.data.comments || data.value.data || [];
+          
+          // PERBAIKAN: Pastikan semua komentar dengan status 'approved' disimpan
+          this.comments = Array.isArray(responseComments) 
+            ? responseComments 
+            : [];
+          
+          // Log untuk debugging
+          console.log(`Fetched ${this.comments.length} comments`);
+          console.log('Approved comments:', this.comments.filter(c => c.status === 'approved').length);
           
           // Gunakan type assertion untuk mengatasi error TypeScript
           const responseData = data.value.data as { comments: Comment[], pendingComments?: Comment[] };
@@ -137,17 +168,24 @@ export const useCommentStore = defineStore('comment', {
             // PERBAIKAN: Gabungkan komentar pending dari respons dengan yang sudah ada
             const serverPendingComments = responseData.pendingComments || [];
             
+            // PERBAIKAN: Filter komentar pending hanya milik user saat ini
+            const userId = authStore.user?.id;
+            const filteredPendingComments = serverPendingComments.filter(c => c.userId === userId);
+            
             // Gabungkan, hindari duplikat berdasarkan ID
-            const allPendingComments = [...serverPendingComments];
+            const allPendingComments = [...filteredPendingComments];
             
             // Tambahkan komentar pending yang sudah ada tapi belum ada di server
             currentPendingComments.forEach(cpc => {
-              if (!allPendingComments.some(apc => apc.id === cpc.id)) {
+              if (!allPendingComments.some(apc => apc.id === cpc.id) && cpc.userId === userId) {
                 allPendingComments.push(cpc);
               }
             });
             
             this.pendingComments = allPendingComments;
+            
+            // Log untuk debugging
+            console.log(`User has ${this.pendingComments.length} pending comments`);
           }
         }
       } catch (err: any) {
@@ -500,6 +538,9 @@ export const useCommentStore = defineStore('comment', {
       // PERBAIKAN: Kembalikan komentar pending dan currentBlogId
       this.pendingComments = savedPendingComments;
       this.currentBlogId = currentBlogId;
+      
+      // PERBAIKAN: Tambahkan log untuk debugging
+      console.log('Comment store state reset, pending comments preserved:', this.pendingComments.length);
     }
   }
 });

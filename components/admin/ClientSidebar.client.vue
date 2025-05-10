@@ -1,4 +1,3 @@
-// components/admin/ClientSidebar.client.vue
 <template>
   <div class="bg-blue-800 dark:bg-dark-bg-secondary w-64 flex-shrink-0 hidden md:block h-screen">
     <div class="flex items-center h-16 flex-shrink-0 px-4 bg-blue-900 dark:bg-gray-900">
@@ -26,7 +25,16 @@
             ]"
             v-html="item.icon"
           ></div>
-          {{ item.name }}
+          <div class="flex items-center">
+            {{ item.name }}
+            <!-- Badge untuk menu Komentar -->
+            <span 
+              v-if="item.path === '/admin/comment' && pendingCount > 0" 
+              class="ml-2 px-2 py-0.5 text-xs bg-red-500 text-white rounded-full"
+            >
+              {{ pendingCount }}
+            </span>
+          </div>
         </NuxtLink>
       </nav>
     </div>
@@ -83,7 +91,16 @@
                 ]"
                 v-html="item.icon"
               ></div>
-              {{ item.name }}
+              <div class="flex items-center">
+                {{ item.name }}
+                <!-- Badge untuk menu Komentar (mobile) -->
+                <span 
+                  v-if="item.path === '/admin/comment' && pendingCount > 0" 
+                  class="ml-2 px-2 py-0.5 text-xs bg-red-500 text-white rounded-full"
+                >
+                  {{ pendingCount }}
+                </span>
+              </div>
             </NuxtLink>
           </nav>
         </div>
@@ -93,8 +110,9 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
+import { useAdminCommentStore } from '~/stores/adminComment.store';
 
 // Props for controlling the sidebar state
 const props = defineProps({
@@ -118,6 +136,13 @@ const { public: { appName } } = useRuntimeConfig();
 // Current route
 const route = useRoute();
 
+// Admin comment store untuk notifikasi
+const adminCommentStore = useAdminCommentStore();
+const pendingCount = computed(() => adminCommentStore.pendingCount);
+
+// Timer untuk refresh notifikasi
+let notificationTimer = null;
+
 // Navigation items with icons
 const navigation = [
   {
@@ -129,6 +154,11 @@ const navigation = [
     name: 'Blog',
     path: '/admin/blog',
     icon: '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" /></svg>'
+  },
+  {
+    name: 'Komentar',
+    path: '/admin/comment',
+    icon: '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>'
   },
   {
     name: 'Bookmark',
@@ -149,4 +179,22 @@ const isActivePath = (path) => {
   }
   return route.path.startsWith(path);
 };
+
+// Cek jumlah komentar pending pada saat komponen dimuat
+onMounted(() => {
+  // Ambil data komentar pending
+  adminCommentStore.fetchCommentCounts();
+  
+  // Set timer untuk mengecek komentar pending setiap 1 menit
+  notificationTimer = setInterval(() => {
+    adminCommentStore.fetchCommentCounts();
+  }, 60000); // 60000 ms = 1 menit
+});
+
+// Bersihkan timer ketika komponen dihapus
+onUnmounted(() => {
+  if (notificationTimer) {
+    clearInterval(notificationTimer);
+  }
+});
 </script>

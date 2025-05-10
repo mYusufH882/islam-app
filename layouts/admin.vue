@@ -1,4 +1,3 @@
-// layouts/admin.vue (updated)
 <template>
   <ClientOnly>
     <FlexContainer>
