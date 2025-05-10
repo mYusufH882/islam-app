@@ -69,7 +69,8 @@
         <!-- Bookmark Icon -->
         <div class="absolute top-3 right-3 z-10">
           <BlogBookmarkIcon
-            :is-bookmarked="isBlogBookmarked(featuredArticle.id)"
+            :key="`featured-${bookmarkUpdateCount}-${featuredArticle.id}`"
+            :is-bookmarked="bookmarkService.isBlogBookmarked(featuredArticle.id)"
             :blog-id="featuredArticle.id"
             :blog-title="featuredArticle.title"
             :blog-excerpt="featuredArticle.excerpt || truncateText(featuredArticle.content, 100)"
@@ -118,13 +119,16 @@
 
     <!-- Regular Article Cards with Short Description -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <BlogCard 
+      <div 
         v-for="article in filteredArticles" 
-        :key="article.id"
-        :blog="article"
-        :categories="categories"
-        @bookmark-updated="handleBookmarkUpdate"
-      />
+        :key="`article-${bookmarkUpdateCount}-${article.id}`"
+      >
+        <BlogCard 
+          :blog="article"
+          :categories="categories"
+          @bookmark-updated="handleBookmarkUpdate"
+        />
+      </div>
     </div>
 
     <!-- Empty State -->
@@ -151,7 +155,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import { useBlogStore } from '~/stores/blog.store';
 import { storeToRefs } from 'pinia';
 import { getImageUrl } from '~/utils/imageHelper';
@@ -175,6 +179,9 @@ const {
 const bookmarkService = useBookmarkService();
 const bookmarkMessage = ref('');
 const showBookmarkMessage = ref(false);
+
+// Counter untuk memaksa reaktivitas dengan mengubah key
+const bookmarkUpdateCount = ref(0);
 
 // Local state
 const searchQuery = ref('');
@@ -277,26 +284,28 @@ const getCategoryName = (categoryId) => {
   return category ? category.name : 'Umum';
 };
 
-// Check if blog is bookmarked
-const isBlogBookmarked = (blogId) => {
-  return bookmarkService.isBlogBookmarked(blogId);
-};
-
-// Handle bookmark updates
-const handleBookmarkUpdate = (event) => {
+// Handle bookmark updates dengan update reaktif
+const handleBookmarkUpdate = async (event) => {
+  // Event berisi blogId dan action
   if (event.action === 'add') {
     bookmarkMessage.value = 'Artikel berhasil ditambahkan ke bookmark';
   } else {
     bookmarkMessage.value = 'Artikel berhasil dihapus dari bookmark';
   }
   
-  // Show message
+  // Tampilkan notifikasi
   showBookmarkMessage.value = true;
   
-  // Hide message after 3 seconds
+  // Sembunyikan notifikasi setelah 3 detik
   setTimeout(() => {
     showBookmarkMessage.value = false;
   }, 3000);
+  
+  // Kunci untuk memaksa reaktivitas - increment counter
+  bookmarkUpdateCount.value++;
+  
+  // Pastikan UI diperbarui
+  await nextTick();
 };
 
 // Reset pagination when filters change
