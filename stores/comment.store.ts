@@ -137,56 +137,38 @@ export const useCommentStore = defineStore('comment', {
         }
         
         // Log data respons untuk debugging
-        console.log('Response data:', data.value);
+        console.log('Response data structure:', data.value);
         
         if (data.value && data.value.success) {
-          // PERBAIKAN: Simpan komentar pending saat ini
-          const currentPendingComments = Array.isArray(this.pendingComments) 
-            ? this.pendingComments.filter(pc => pc.blogId === blogId) 
-            : [];
+          // PERBAIKAN: Struktur respons API adalah data langsung berupa array
+          // data.value.data adalah array komentar, bukan objek yang memiliki property comments
           
-          // PERBAIKAN: Pastikan komentar yang disetujui disimpan dengan benar
-          // Jika data.value.data.comments adalah array, gunakan itu
-          // Jika tidak, coba data.value.data
-          const responseComments = data.value.data.comments || data.value.data || [];
+          // Simpan semua komentar - berasal langsung dari data.value.data yang sudah berupa array
+          const commentsArray = Array.isArray(data.value.data) ? data.value.data : [];
+          console.log('Comments array from API:', commentsArray);
           
-          // PERBAIKAN: Pastikan semua komentar dengan status 'approved' disimpan
-          this.comments = Array.isArray(responseComments) 
-            ? responseComments 
-            : [];
+          // PENTING: Set langsung ke this.comments
+          this.comments = commentsArray;
           
-          // Log untuk debugging
-          console.log(`Fetched ${this.comments.length} comments`);
-          console.log('Approved comments:', this.comments.filter(c => c.status === 'approved').length);
-          
-          // Gunakan type assertion untuk mengatasi error TypeScript
-          const responseData = data.value.data as { comments: Comment[], pendingComments?: Comment[] };
-          
-          // Menyimpan komentar pending milik user saat ini
+          // Filter komentar pending untuk user saat ini
           const authStore = useAuthStore();
           if (authStore.isAuthenticated) {
-            // PERBAIKAN: Gabungkan komentar pending dari respons dengan yang sudah ada
-            const serverPendingComments = responseData.pendingComments || [];
-            
-            // PERBAIKAN: Filter komentar pending hanya milik user saat ini
             const userId = authStore.user?.id;
-            const filteredPendingComments = serverPendingComments.filter(c => c.userId === userId);
             
-            // Gabungkan, hindari duplikat berdasarkan ID
-            const allPendingComments = [...filteredPendingComments];
+            // Filter komentar pending hanya untuk user yang login
+            const pendingUserComments = commentsArray.filter(
+              c => c.status === 'pending' && c.userId === userId
+            );
             
-            // Tambahkan komentar pending yang sudah ada tapi belum ada di server
-            currentPendingComments.forEach(cpc => {
-              if (!allPendingComments.some(apc => apc.id === cpc.id) && cpc.userId === userId) {
-                allPendingComments.push(cpc);
-              }
-            });
+            // Set ke pendingComments
+            this.pendingComments = pendingUserComments;
             
-            this.pendingComments = allPendingComments;
-            
-            // Log untuk debugging
-            console.log(`User has ${this.pendingComments.length} pending comments`);
+            console.log(`User has ${pendingUserComments.length} pending comments`);
           }
+          
+          // Log jumlah komentar yang disetujui untuk debugging
+          const approvedCount = commentsArray.filter(c => c.status === 'approved').length;
+          console.log(`Total ${commentsArray.length} comments loaded, ${approvedCount} approved`);
         }
       } catch (err: any) {
         console.error('Error fetching comments:', err);

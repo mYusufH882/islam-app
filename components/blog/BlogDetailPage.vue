@@ -183,6 +183,7 @@
       
       <!-- Comments Section -->
       <CommentSection 
+        v-if="article && article.id"
         :blog-id="Number(article.id)" 
         :key="`comments-${article.id}`"
       />
