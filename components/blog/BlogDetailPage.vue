@@ -182,13 +182,10 @@
       </div>
       
       <!-- Comments Section -->
-      <div v-if="article" class="bg-white p-4 rounded-lg shadow mb-6">
-        <h3 class="text-lg font-semibold mb-3">Komentar</h3>
-        <CommentSection 
-          :blog-id="Number(article.id)" 
-          :key="`comments-${article.id}`"
-        />
-      </div>
+      <CommentSection 
+        :blog-id="Number(article.id)" 
+        :key="`comments-${article.id}`"
+      />
     </div>
 </template>
 

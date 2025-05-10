@@ -158,6 +158,17 @@ const onDelete = async (commentId: number) => {
 
 // Lifecycle hooks
 onMounted(async () => {
+  // PERBAIKAN: Jika ada pendingComments yang sudah disimpan untuk blog ini, tampilkan
+  const existingPendingComments = computed(() => {
+    return Array.isArray(commentStore.pendingComments) 
+      ? commentStore.pendingComments.filter(c => c.blogId === props.blogId)
+      : [];
+  });
+  
+  if (existingPendingComments.value.length > 0) {
+    console.log('Menampilkan komentar pending yang sudah disimpan:', existingPendingComments.value);
+  }
+  
   await fetchComments();
 });
 
